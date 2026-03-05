@@ -1,0 +1,45 @@
+[project]
+name = "brandforge"
+version = "0.1.0"
+description = "AI-Powered Multi-Agent Marketing Platform — Google ADK"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "google-adk[vertexai]>=0.3.0",
+    "google-cloud-aiplatform>=1.50.0",
+    "google-cloud-firestore>=2.16.0",
+    "google-cloud-storage>=2.14.0",
+    "google-cloud-pubsub>=2.21.0",
+    "google-cloud-secret-manager>=2.20.0",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "ANN", "S", "B"]
+ignore = ["ANN101", "ANN102", "ANN401", "S101"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
