@@ -121,7 +121,7 @@ async def transcribe_voice_brief(
         )
         return {"status": "success", "transcription": transcription}
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         logger.warning(
             "Voice brief transcription timed out for campaign %s", campaign_id
         )

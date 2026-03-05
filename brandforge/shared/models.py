@@ -5,18 +5,17 @@ Never define data models inside agent files. Import from this module only.
 
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
-from enum import Enum
-
-import re
+from enum import StrEnum
 
 from pydantic import BaseModel, Field, field_validator
 
 # ── Enums ──────────────────────────────────────────────────────────────────
 
 
-class CampaignStatus(str, Enum):
+class CampaignStatus(StrEnum):
     """Lifecycle status of a campaign."""
 
     PENDING = "pending"
@@ -27,7 +26,7 @@ class CampaignStatus(str, Enum):
     FAILED = "failed"
 
 
-class AgentStatus(str, Enum):
+class AgentStatus(StrEnum):
     """Execution status of a single agent run."""
 
     IDLE = "idle"
@@ -36,7 +35,7 @@ class AgentStatus(str, Enum):
     FAILED = "failed"
 
 
-class Platform(str, Enum):
+class Platform(StrEnum):
     """Supported social media platforms."""
 
     INSTAGRAM = "instagram"
