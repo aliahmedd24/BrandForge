@@ -1,0 +1,2056 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.11.9, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\aibra\.gemini\antigravity\scratch\BrandForge\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\aibra\.gemini\antigravity\scratch\BrandForge
+configfile: pyproject.toml
+plugins: anyio-4.12.1, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 51 items
+
+tests/brand_strategist/test_brand_strategist.py::test_text_only_brief_produces_valid_brand_dna PASSED [  1%]
+tests/brand_strategist/test_brand_strategist.py::test_with_image_assets_produces_visual_analysis PASSED [  3%]
+tests/brand_strategist/test_brand_strategist.py::test_voice_brief_transcription_returns_text PASSED [  5%]
+tests/brand_strategist/test_brand_strategist.py::test_audio_timeout_fallback_returns_error_gracefully PASSED [  7%]
+tests/brand_strategist/test_brand_strategist.py::test_brand_dna_stored_in_firestore PASSED [  9%]
+tests/brand_strategist/test_brand_strategist.py::test_color_palette_hex_valid_accepts_correct_hex PASSED [ 11%]
+tests/brand_strategist/test_brand_strategist.py::test_color_palette_hex_valid_rejects_invalid_hex PASSED [ 13%]
+tests/brand_strategist/test_brand_strategist.py::test_no_hallucination_source_summary_includes_brand_name PASSED [ 15%]
+tests/brand_strategist/test_brand_strategist.py::test_version_increment_on_same_campaign PASSED [ 17%]
+tests/brand_strategist/test_brand_strategist.py::test_pubsub_message_published_after_store PASSED [ 19%]
+tests/copy_editor/test_copyeditor.py::test_platform_copy_character_limits PASSED [ 21%]
+tests/copy_editor/test_copyeditor.py::test_hashtag_counts PASSED         [ 23%]
+tests/copy_editor/test_copyeditor.py::test_brand_voice_score_threshold PASSED [ 25%]
+tests/image_generator/test_imagegen.py::test_all_platform_specs_covered FAILED [ 27%]
+tests/image_generator/test_imagegen.py::test_three_variants_per_spec FAILED [ 29%]
+tests/image_generator/test_imagegen.py::test_gcs_upload_complete FAILED  [ 31%]
+tests/infra/test_firestore.py::test_firestore_write_and_read_campaign PASSED [ 33%]
+tests/infra/test_firestore.py::test_firestore_update_campaign_status FAILED [ 35%]
+tests/infra/test_firestore.py::test_firestore_get_nonexistent_returns_none FAILED [ 37%]
+tests/infra/test_models.py::TestEnums::test_campaign_status_values PASSED [ 39%]
+tests/infra/test_models.py::TestEnums::test_agent_status_values PASSED   [ 41%]
+tests/infra/test_models.py::TestEnums::test_platform_values PASSED       [ 43%]
+tests/infra/test_models.py::TestBrandBrief::test_brand_brief_minimal PASSED [ 45%]
+tests/infra/test_models.py::TestBrandBrief::test_brand_brief_full PASSED [ 47%]
+tests/infra/test_models.py::TestCampaign::test_campaign_defaults PASSED  [ 49%]
+tests/infra/test_models.py::TestCampaign::test_campaign_json_round_trip PASSED [ 50%]
+tests/infra/test_models.py::TestAgentRun::test_agent_run_defaults PASSED [ 52%]
+tests/infra/test_models.py::TestAgentRun::test_agent_run_json_round_trip PASSED [ 54%]
+tests/infra/test_models.py::TestAgentMessage::test_agent_message_defaults PASSED [ 56%]
+tests/infra/test_models.py::TestAgentMessage::test_agent_message_json_round_trip PASSED [ 58%]
+tests/infra/test_models.py::TestAgentMessage::test_agent_message_to_dict_for_pubsub PASSED [ 60%]
+tests/infra/test_pubsub.py::test_pubsub_publish_agent_message PASSED     [ 62%]
+tests/infra/test_secrets.py::TestConfigLocal::test_config_returns_project_id PASSED [ 64%]
+tests/infra/test_secrets.py::TestConfigLocal::test_config_has_bucket_name PASSED [ 66%]
+tests/infra/test_secrets.py::TestConfigLocal::test_config_has_pubsub_topics PASSED [ 68%]
+tests/infra/test_secrets.py::TestSecretAccess::test_secret_from_env PASSED [ 70%]
+tests/infra/test_secrets.py::TestSecretAccess::test_secret_missing_raises PASSED [ 72%]
+tests/infra/test_storage.py::test_storage_upload_and_download PASSED     [ 74%]
+tests/infra/test_storage.py::test_storage_download_nonexistent_raises PASSED [ 76%]
+tests/integration/test_production_pipeline.py::test_parallel_execution PASSED [ 78%]
+tests/integration/test_production_pipeline.py::test_all_completion_events_published PASSED [ 80%]
+tests/mood_board_director/test_moodboard.py::test_generates_six_images FAILED [ 82%]
+tests/mood_board_director/test_moodboard.py::test_pdf_generated PASSED   [ 84%]
+tests/scriptwriter/test_scriptwriter.py::test_generates_three_durations PASSED [ 86%]
+tests/scriptwriter/test_scriptwriter.py::test_script_schema_valid PASSED [ 88%]
+tests/scriptwriter/test_scriptwriter.py::test_forbidden_words_absent PASSED [ 90%]
+tests/video_producer/test_videoproducer.py::test_waits_for_scriptwriter PASSED [ 92%]
+tests/video_producer/test_videoproducer.py::test_veo_poll_timeout FAILED [ 94%]
+tests/video_producer/test_videoproducer.py::test_final_video_has_audio PASSED [ 96%]
+tests/virtual_tryon/test_tryon.py::test_generates_variants FAILED        [ 98%]
+tests/virtual_tryon/test_tryon.py::test_gcs_upload_complete FAILED       [100%]
+
+================================== FAILURES ===================================
+_______________________ test_all_platform_specs_covered _______________________
+
+    @pytest.mark.asyncio
+    async def test_all_platform_specs_covered() -> None:
+        """Each platform has at least 1 image per spec."""
+        mock_get_doc = AsyncMock(return_value=SAMPLE_BRAND_DNA)
+        mock_upload = AsyncMock(side_effect=lambda **kw: f"gs://bucket/{kw['destination_path']}")
+        mock_model = _mock_imagen_model()
+    
+>       with (
+            patch("brandforge.shared.firestore.get_document", mock_get_doc),
+            patch("brandforge.shared.storage.upload_blob", mock_upload),
+            patch(
+                "brandforge.agents.image_generator.tools.ImageGenerationModel.from_pretrained",
+                return_value=mock_model,
+            ),
+        ):
+
+tests\image_generator\test_imagegen.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <unittest.mock._patch object at 0x000001DAD0DDBB10>
+
+    def __enter__(self):
+        """Perform the patch."""
+        new, spec, spec_set = self.new, self.spec, self.spec_set
+        autospec, kwargs = self.autospec, self.kwargs
+        new_callable = self.new_callable
+>       self.target = self.getter()
+                      ^^^^^^^^^^^^^
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py:1430: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'brandforge.agents.image_generator.tools.ImageGenerationModel'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P<pkg>{dotted_words})'
+                                       f'(?P<cln>:(?P<obj>{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+>           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'brandforge.agents.image_generator.tools' has no attribute 'ImageGenerationModel'
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\pkgutil.py:715: AttributeError
+________________________ test_three_variants_per_spec _________________________
+
+    @pytest.mark.asyncio
+    async def test_three_variants_per_spec() -> None:
+        """Each image spec produces exactly 3 A/B/C variants."""
+        mock_get_doc = AsyncMock(return_value=SAMPLE_BRAND_DNA)
+        mock_upload = AsyncMock(side_effect=lambda **kw: f"gs://bucket/{kw['destination_path']}")
+        mock_model = _mock_imagen_model()
+    
+>       with (
+            patch("brandforge.shared.firestore.get_document", mock_get_doc),
+            patch("brandforge.shared.storage.upload_blob", mock_upload),
+            patch(
+                "brandforge.agents.image_generator.tools.ImageGenerationModel.from_pretrained",
+                return_value=mock_model,
+            ),
+        ):
+
+tests\image_generator\test_imagegen.py:126: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <unittest.mock._patch object at 0x000001DAD0D5DD90>
+
+    def __enter__(self):
+        """Perform the patch."""
+        new, spec, spec_set = self.new, self.spec, self.spec_set
+        autospec, kwargs = self.autospec, self.kwargs
+        new_callable = self.new_callable
+>       self.target = self.getter()
+                      ^^^^^^^^^^^^^
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py:1430: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'brandforge.agents.image_generator.tools.ImageGenerationModel'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P<pkg>{dotted_words})'
+                                       f'(?P<cln>:(?P<obj>{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+>           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'brandforge.agents.image_generator.tools' has no attribute 'ImageGenerationModel'
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\pkgutil.py:715: AttributeError
+__________________________ test_gcs_upload_complete ___________________________
+
+    @pytest.mark.asyncio
+    async def test_gcs_upload_complete() -> None:
+        """All generated images have populated gcs_url values."""
+        mock_get_doc = AsyncMock(return_value=SAMPLE_BRAND_DNA)
+        mock_upload = AsyncMock(side_effect=lambda **kw: f"gs://bucket/{kw['destination_path']}")
+        mock_model = _mock_imagen_model()
+    
+>       with (
+            patch("brandforge.shared.firestore.get_document", mock_get_doc),
+            patch("brandforge.shared.storage.upload_blob", mock_upload),
+            patch(
+                "brandforge.agents.image_generator.tools.ImageGenerationModel.from_pretrained",
+                return_value=mock_model,
+            ),
+        ):
+
+tests\image_generator\test_imagegen.py:161: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <unittest.mock._patch object at 0x000001DAD0D6BC90>
+
+    def __enter__(self):
+        """Perform the patch."""
+        new, spec, spec_set = self.new, self.spec, self.spec_set
+        autospec, kwargs = self.autospec, self.kwargs
+        new_callable = self.new_callable
+>       self.target = self.getter()
+                      ^^^^^^^^^^^^^
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py:1430: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'brandforge.agents.image_generator.tools.ImageGenerationModel'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P<pkg>{dotted_words})'
+                                       f'(?P<cln>:(?P<obj>{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+>           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'brandforge.agents.image_generator.tools' has no attribute 'ImageGenerationModel'
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\pkgutil.py:715: AttributeError
+____________________ test_firestore_update_campaign_status ____________________
+
+    @pytest.mark.asyncio
+    async def test_firestore_update_campaign_status() -> None:
+        """Can update a Campaign document's status field."""
+        campaign = _make_test_campaign()
+        doc_data = campaign.model_dump(mode="json")
+>       await create_document(FIRESTORE_COLLECTION_CAMPAIGNS, campaign.id, doc_data)
+
+tests\infra\test_firestore.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+collection = 'campaigns', doc_id = '678869ae-4b33-4f56-aff3-5da27ce09ad7'
+data = {'asset_bundle_id': None, 'brand_brief': {'brand_name': 'FirestoreTest', 'campaign_goal': 'integration test', 'platfor...iption': 'Testing Firestore connectivity', ...}, 'brand_dna_id': None, 'created_at': '2026-03-05T11:52:59.946594', ...}
+
+    async def create_document(
+        collection: str, doc_id: str, data: dict[str, Any]
+    ) -> str:
+        """Create or overwrite a Firestore document.
+    
+        Args:
+            collection: The collection name (use constants from config.py).
+            doc_id: The document ID.
+            data: The document data as a dict.
+    
+        Returns:
+            The document ID that was written.
+        """
+        client = get_firestore_client()
+        doc_ref = client.collection(collection).document(doc_id)
+>       await doc_ref.set(data)
+
+brandforge\shared\firestore.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <google.cloud.firestore_v1.async_document.AsyncDocumentReference object at 0x000001DAD0D81190>
+document_data = {'asset_bundle_id': None, 'brand_brief': {'brand_name': 'FirestoreTest', 'campaign_goal': 'integration test', 'platfor...iption': 'Testing Firestore connectivity', ...}, 'brand_dna_id': None, 'created_at': '2026-03-05T11:52:59.946594', ...}
+merge = False
+retry = <_MethodDefault._DEFAULT_VALUE: <object object at 0x000001DACDDE1B40>>
+timeout = None
+
+    async def set(
+        self,
+        document_data: dict,
+        merge: bool = False,
+        retry: retries.AsyncRetry | object | None = gapic_v1.method.DEFAULT,
+        timeout: float | None = None,
+    ) -> write.WriteResult:
+        """Replace the current document in the Firestore database.
+    
+        A write ``option`` can be specified to indicate preconditions of
+        the "set" operation. If no ``option`` is specified and this document
+        doesn't exist yet, this method will create it.
+    
+        Overwrites all content for the document with the fields in
+        ``document_data``. This method performs almost the same functionality
+        as :meth:`create`. The only difference is that this method doesn't
+        make any requirements on the existence of the document (unless
+        ``option`` is used), whereas as :meth:`create` will fail if the
+        document already exists.
+    
+        Args:
+            document_data (dict): Property names and values to use for
+                replacing a document.
+            merge (Optional[bool] or Optional[List<apispec>]):
+                If True, apply merging instead of overwriting the state
+                of the document.
+            retry (google.api_core.retry.Retry): Designation of what errors, if any,
+                should be retried.  Defaults to a system-specified policy.
+            timeout (float): The timeout for this request.  Defaults to a
+                system-specified value.
+    
+        Returns:
+            :class:`~google.cloud.firestore_v1.types.WriteResult`:
+            The write result corresponding to the committed document. A write
+            result contains an ``update_time`` field.
+        """
+        batch, kwargs = self._prep_set(document_data, merge, retry, timeout)
+>       write_results = await batch.commit(**kwargs)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\google\cloud\firestore_v1\async_document.py:131: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <google.cloud.firestore_v1.async_batch.AsyncWriteBatch object at 0x000001DAD0D80C90>
+retry = <_MethodDefault._DEFAULT_VALUE: <object object at 0x000001DACDDE1B40>>
+timeout = None
+
+    async def commit(
+        self,
+        retry: retries.AsyncRetry | object | None = gapic_v1.method.DEFAULT,
+        timeout: float | None = None,
+    ) -> list[WriteResult]:
+        """Commit the changes accumulated in this batch.
+    
+        Args:
+            retry (google.api_core.retry.Retry): Designation of what errors, if any,
+                should be retried.  Defaults to a system-specified policy.
+            timeout (float): The timeout for this request.  Defaults to a
+                system-specified value.
+    
+        Returns:
+            List[:class:`google.cloud.firestore_v1.write.WriteResult`, ...]:
+            The write results corresponding to the changes committed, returned
+            in the same order as the changes were applied to this batch. A
+            write result contains an ``update_time`` field.
+        """
+        request, kwargs = self._prep_commit(retry, timeout)
+    
+>       commit_response = await self._client._firestore_api.commit(
+            request=request,
+            metadata=self._client._rpc_metadata,
+            **kwargs,
+        )
+
+.venv\Lib\site-packages\google\cloud\firestore_v1\async_batch.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <google.cloud.firestore_v1.services.firestore.async_client.FirestoreAsyncClient object at 0x000001DAD0F04190>
+request = database: "projects/brandforge-489114/databases/(default)"
+writes {
+  update {
+    name: "projects/brandforge-489114/d...    }
+    }
+    fields {
+      key: "asset_bundle_id"
+      value {
+        null_value: NULL_VALUE
+      }
+    }
+  }
+}
+
+
+    async def commit(
+        self,
+        request: Optional[Union[firestore.CommitRequest, dict]] = None,
+        *,
+        database: Optional[str] = None,
+        writes: Optional[MutableSequence[gf_write.Write]] = None,
+        retry: OptionalRetry = gapic_v1.method.DEFAULT,
+        timeout: Union[float, object] = gapic_v1.method.DEFAULT,
+        metadata: Sequence[Tuple[str, Union[str, bytes]]] = (),
+    ) -> firestore.CommitResponse:
+        r"""Commits a transaction, while optionally updating
+        documents.
+    
+        .. code-block:: python
+    
+            # This snippet has been automatically generated and should be regarded as a
+            # code template only.
+            # It will require modifications to work:
+            # - It may require correct/in-range values for request initialization.
+            # - It may require specifying regional endpoints when creating the service
+            #   client as shown in:
+            #   https://googleapis.dev/python/google-api-core/latest/client_options.html
+            from google.cloud import firestore_v1
+    
+            async def sample_commit():
+                # Create a client
+                client = firestore_v1.FirestoreAsyncClient()
+    
+                # Initialize request argument(s)
+                request = firestore_v1.CommitRequest(
+                    database="database_value",
+                )
+    
+                # Make the request
+                response = await client.commit(request=request)
+    
+                # Handle the response
+                print(response)
+    
+        Args:
+            request (Optional[Union[google.cloud.firestore_v1.types.CommitRequest, dict]]):
+                The request object. The request for
+                [Firestore.Commit][google.firestore.v1.Firestore.Commit].
+            database (:class:`str`):
+                Required. The database name. In the format:
+                ``projects/{project_id}/databases/{database_id}``.
+    
+                This corresponds to the ``database`` field
+                on the ``request`` instance; if ``request`` is provided, this
+                should not be set.
+            writes (:class:`MutableSequence[google.cloud.firestore_v1.types.Write]`):
+                The writes to apply.
+    
+                Always executed atomically and in order.
+    
+                This corresponds to the ``writes`` field
+                on the ``request`` instance; if ``request`` is provided, this
+                should not be set.
+            retry (google.api_core.retry_async.AsyncRetry): Designation of what errors, if any,
+                should be retried.
+            timeout (float): The timeout for this request.
+            metadata (Sequence[Tuple[str, Union[str, bytes]]]): Key/value pairs which should be
+                sent along with the request as metadata. Normally, each value must be of type `str`,
+                but for metadata keys ending with the suffix `-bin`, the corresponding values must
+                be of type `bytes`.
+    
+        Returns:
+            google.cloud.firestore_v1.types.CommitResponse:
+                The response for
+                [Firestore.Commit][google.firestore.v1.Firestore.Commit].
+    
+        """
+        # Create or coerce a protobuf request object.
+        # - Quick check: If we got a request object, we should *not* have
+        #   gotten any keyword arguments that map to the request.
+        flattened_params = [database, writes]
+        has_flattened_params = (
+            len([param for param in flattened_params if param is not None]) > 0
+        )
+        if request is not None and has_flattened_params:
+            raise ValueError(
+                "If the `request` argument is set, then none of "
+                "the individual field arguments should be set."
+            )
+    
+        # - Use the request object if provided (there's no risk of modifying the input as
+        #   there are no flattened fields), or create one.
+        if not isinstance(request, firestore.CommitRequest):
+            request = firestore.CommitRequest(request)
+    
+        # If we have keyword arguments corresponding to fields on the
+        # request, apply these.
+        if database is not None:
+            request.database = database
+        if writes:
+            request.writes.extend(writes)
+    
+        # Wrap the RPC method; this adds retry and timeout information,
+        # and friendly error handling.
+        rpc = self._client._transport._wrapped_methods[self._client._transport.commit]
+    
+        # Certain fields should be provided within the metadata header;
+        # add these here.
+        metadata = tuple(metadata) + (
+            gapic_v1.routing_header.to_grpc_metadata((("database", request.database),)),
+        )
+    
+        # Validate the universe domain.
+        self._client._validate_universe_domain()
+    
+        # Send the request.
+>       response = await rpc(
+            request,
+            retry=retry,
+            timeout=timeout,
+            metadata=metadata,
+        )
+
+.venv\Lib\site-packages\google\cloud\firestore_v1\services\firestore\async_client.py:1046: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (database: "projects/brandforge-489114/databases/(default)"
+writes {
+  update {
+    name: "projects/brandforge-489114/...  }
+    }
+    fields {
+      key: "asset_bundle_id"
+      value {
+        null_value: NULL_VALUE
+      }
+    }
+  }
+}
+,)
+kwargs = {'metadata': [('google-cloud-resource-prefix', 'projects/brandforge-489114/databases/(default)'), ('x-goog-request-par...14/databases/%28default%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')]}
+sleep_generator = <generator object exponential_sleep_generator at 0x000001DAD0EDF790>
+
+    @functools.wraps(func)
+    async def retry_wrapped_func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        """A wrapper that calls target function with retry."""
+        sleep_generator = exponential_sleep_generator(
+            self._initial, self._maximum, multiplier=self._multiplier
+        )
+>       return await retry_target(
+            functools.partial(func, *args, **kwargs),
+            predicate=self._predicate,
+            sleep_generator=sleep_generator,
+            timeout=self._timeout,
+            on_error=on_error,
+        )
+
+.venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py:231: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+target = functools.partial(<function _wrap_unary_errors.<locals>.error_remapped_callable at 0x000001DAD0D46200>, database: "pro...14/databases/%28default%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')])
+predicate = <function if_exception_type.<locals>.if_exception_type_predicate at 0x000001DAD0EF7A60>
+sleep_generator = <generator object exponential_sleep_generator at 0x000001DAD0EDF790>
+timeout = 60.0, on_error = None
+exception_factory = <function build_retry_error at 0x000001DAD04C7E20>
+kwargs = {}, deadline = 190479.421
+error_list = [RuntimeError('Event loop is closed')]
+sleep_iter = <generator object exponential_sleep_generator at 0x000001DAD0EDF790>
+
+    async def retry_target(
+        target: Callable[[], Awaitable[_R]],
+        predicate: Callable[[Exception], bool],
+        sleep_generator: Iterable[float],
+        timeout: float | None = None,
+        on_error: Callable[[Exception], None] | None = None,
+        exception_factory: Callable[
+            [list[Exception], RetryFailureReason, float | None],
+            tuple[Exception, Exception | None],
+        ] = build_retry_error,
+        **kwargs,
+    ):
+        """Await a coroutine and retry if it fails.
+    
+        This is the lowest-level retry helper. Generally, you'll use the
+        higher-level retry helper :class:`Retry`.
+    
+        Args:
+            target(Callable[[], Any]): The function to call and retry. This must be a
+                nullary function - apply arguments with `functools.partial`.
+            predicate (Callable[Exception]): A callable used to determine if an
+                exception raised by the target should be considered retryable.
+                It should return True to retry or False otherwise.
+            sleep_generator (Iterable[float]): An infinite iterator that determines
+                how long to sleep between retries.
+            timeout (Optional[float]): How long to keep retrying the target, in seconds.
+                Note: timeout is only checked before initiating a retry, so the target may
+                run past the timeout value as long as it is healthy.
+            on_error (Optional[Callable[Exception]]): If given, the on_error
+                callback will be called with each retryable exception raised by the
+                target. Any error raised by this function will *not* be caught.
+            exception_factory: A function that is called when the retryable reaches
+                a terminal failure state, used to construct an exception to be raised.
+                It takes a list of all exceptions encountered, a retry.RetryFailureReason
+                enum indicating the failure cause, and the original timeout value
+                as arguments. It should return a tuple of the exception to be raised,
+                along with the cause exception if any. The default implementation will raise
+                a RetryError on timeout, or the last exception encountered otherwise.
+            deadline (float): DEPRECATED use ``timeout`` instead. For backward
+                compatibility, if set it will override the ``timeout`` parameter.
+    
+        Returns:
+            Any: the return value of the target function.
+    
+        Raises:
+            ValueError: If the sleep generator stops yielding values.
+            Exception: a custom exception specified by the exception_factory if provided.
+                If no exception_factory is provided:
+                    google.api_core.RetryError: If the timeout is exceeded while retrying.
+                    Exception: If the target raises an error that isn't retryable.
+        """
+    
+        timeout = kwargs.get("deadline", timeout)
+    
+        deadline = time.monotonic() + timeout if timeout is not None else None
+        error_list: list[Exception] = []
+        sleep_iter = iter(sleep_generator)
+    
+        # continue trying until an attempt completes, or a terminal exception is raised in _retry_error_helper
+        # TODO: support max_attempts argument: https://github.com/googleapis/python-api-core/issues/535
+        while True:
+            try:
+                return await target()
+            # pylint: disable=broad-except
+            # This function explicitly must deal with broad exceptions.
+            except Exception as exc:
+                # defer to shared logic for handling errors
+>               next_sleep = _retry_error_helper(
+                    exc,
+                    deadline,
+                    sleep_iter,
+                    error_list,
+                    predicate,
+                    on_error,
+                    exception_factory,
+                    timeout,
+                )
+
+.venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+exc = RuntimeError('Event loop is closed'), deadline = 190479.421
+sleep_iterator = <generator object exponential_sleep_generator at 0x000001DAD0EDF790>
+error_list = [RuntimeError('Event loop is closed')]
+predicate_fn = <function if_exception_type.<locals>.if_exception_type_predicate at 0x000001DAD0EF7A60>
+on_error_fn = None
+exc_factory_fn = <function build_retry_error at 0x000001DAD04C7E20>
+original_timeout = 60.0
+
+    def _retry_error_helper(
+        exc: Exception,
+        deadline: float | None,
+        sleep_iterator: Iterator[float],
+        error_list: list[Exception],
+        predicate_fn: Callable[[Exception], bool],
+        on_error_fn: Callable[[Exception], None] | None,
+        exc_factory_fn: Callable[
+            [list[Exception], RetryFailureReason, float | None],
+            tuple[Exception, Exception | None],
+        ],
+        original_timeout: float | None,
+    ) -> float:
+        """
+        Shared logic for handling an error for all retry implementations
+    
+        - Raises an error on timeout or non-retryable error
+        - Calls on_error_fn if provided
+        - Logs the error
+    
+        Args:
+           - exc: the exception that was raised
+           - deadline: the deadline for the retry, calculated as a diff from time.monotonic()
+           - sleep_iterator: iterator to draw the next backoff value from
+           - error_list: the list of exceptions that have been raised so far
+           - predicate_fn: takes `exc` and returns true if the operation should be retried
+           - on_error_fn: callback to execute when a retryable error occurs
+           - exc_factory_fn: callback used to build the exception to be raised on terminal failure
+           - original_timeout_val: the original timeout value for the retry (in seconds),
+               to be passed to the exception factory for building an error message
+        Returns:
+            - the sleep value chosen before the next attempt
+        """
+        error_list.append(exc)
+        if not predicate_fn(exc):
+            final_exc, source_exc = exc_factory_fn(
+                error_list,
+                RetryFailureReason.NON_RETRYABLE_ERROR,
+                original_timeout,
+            )
+>           raise final_exc from source_exc
+
+.venv\Lib\site-packages\google\api_core\retry\retry_base.py:216: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+target = functools.partial(<function _wrap_unary_errors.<locals>.error_remapped_callable at 0x000001DAD0D46200>, database: "pro...14/databases/%28default%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')])
+predicate = <function if_exception_type.<locals>.if_exception_type_predicate at 0x000001DAD0EF7A60>
+sleep_generator = <generator object exponential_sleep_generator at 0x000001DAD0EDF790>
+timeout = 60.0, on_error = None
+exception_factory = <function build_retry_error at 0x000001DAD04C7E20>
+kwargs = {}, deadline = 190479.421
+error_list = [RuntimeError('Event loop is closed')]
+sleep_iter = <generator object exponential_sleep_generator at 0x000001DAD0EDF790>
+
+    async def retry_target(
+        target: Callable[[], Awaitable[_R]],
+        predicate: Callable[[Exception], bool],
+        sleep_generator: Iterable[float],
+        timeout: float | None = None,
+        on_error: Callable[[Exception], None] | None = None,
+        exception_factory: Callable[
+            [list[Exception], RetryFailureReason, float | None],
+            tuple[Exception, Exception | None],
+        ] = build_retry_error,
+        **kwargs,
+    ):
+        """Await a coroutine and retry if it fails.
+    
+        This is the lowest-level retry helper. Generally, you'll use the
+        higher-level retry helper :class:`Retry`.
+    
+        Args:
+            target(Callable[[], Any]): The function to call and retry. This must be a
+                nullary function - apply arguments with `functools.partial`.
+            predicate (Callable[Exception]): A callable used to determine if an
+                exception raised by the target should be considered retryable.
+                It should return True to retry or False otherwise.
+            sleep_generator (Iterable[float]): An infinite iterator that determines
+                how long to sleep between retries.
+            timeout (Optional[float]): How long to keep retrying the target, in seconds.
+                Note: timeout is only checked before initiating a retry, so the target may
+                run past the timeout value as long as it is healthy.
+            on_error (Optional[Callable[Exception]]): If given, the on_error
+                callback will be called with each retryable exception raised by the
+                target. Any error raised by this function will *not* be caught.
+            exception_factory: A function that is called when the retryable reaches
+                a terminal failure state, used to construct an exception to be raised.
+                It takes a list of all exceptions encountered, a retry.RetryFailureReason
+                enum indicating the failure cause, and the original timeout value
+                as arguments. It should return a tuple of the exception to be raised,
+                along with the cause exception if any. The default implementation will raise
+                a RetryError on timeout, or the last exception encountered otherwise.
+            deadline (float): DEPRECATED use ``timeout`` instead. For backward
+                compatibility, if set it will override the ``timeout`` parameter.
+    
+        Returns:
+            Any: the return value of the target function.
+    
+        Raises:
+            ValueError: If the sleep generator stops yielding values.
+            Exception: a custom exception specified by the exception_factory if provided.
+                If no exception_factory is provided:
+                    google.api_core.RetryError: If the timeout is exceeded while retrying.
+                    Exception: If the target raises an error that isn't retryable.
+        """
+    
+        timeout = kwargs.get("deadline", timeout)
+    
+        deadline = time.monotonic() + timeout if timeout is not None else None
+        error_list: list[Exception] = []
+        sleep_iter = iter(sleep_generator)
+    
+        # continue trying until an attempt completes, or a terminal exception is raised in _retry_error_helper
+        # TODO: support max_attempts argument: https://github.com/googleapis/python-api-core/issues/535
+        while True:
+            try:
+>               return await target()
+                             ^^^^^^^^
+
+.venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (database: "projects/brandforge-489114/databases/(default)"
+writes {
+  update {
+    name: "projects/brandforge-489114/...  }
+    }
+    fields {
+      key: "asset_bundle_id"
+      value {
+        null_value: NULL_VALUE
+      }
+    }
+  }
+}
+,)
+kwargs = {'metadata': [('google-cloud-resource-prefix', 'projects/brandforge-489114/databases/(default)'), ('x-goog-request-par...efault%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')], 'timeout': 60.0}
+now_timestamp = 1772707979.947583, time_since_first_attempt = 0.0
+remaining_timeout = 60.0
+
+    @functools.wraps(func)
+    def func_with_timeout(*args, **kwargs):
+        """Wrapped function that adds timeout."""
+    
+        if self._timeout is not None:
+            # All calculations are in seconds
+            now_timestamp = self._clock().timestamp()
+    
+            # To avoid usage of nonlocal but still have round timeout
+            # numbers for first attempt (in most cases the only attempt made
+            # for an RPC.
+            if now_timestamp - first_attempt_timestamp < 0.001:
+                now_timestamp = first_attempt_timestamp
+    
+            time_since_first_attempt = now_timestamp - first_attempt_timestamp
+            remaining_timeout = self._timeout - time_since_first_attempt
+    
+            # Although the `deadline` parameter in `google.api_core.retry.Retry`
+            # is deprecated, and should be treated the same as the `timeout`,
+            # it is still possible for the `deadline` argument in
+            # `google.api_core.retry.Retry` to be larger than the `timeout`.
+            # See https://github.com/googleapis/python-api-core/issues/654
+            # Only positive non-zero timeouts are supported.
+            # Revert back to the initial timeout for negative or 0 timeout values.
+            if remaining_timeout < 1:
+                remaining_timeout = self._timeout
+    
+            kwargs["timeout"] = remaining_timeout
+    
+>       return func(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\google\api_core\timeout.py:130: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (database: "projects/brandforge-489114/databases/(default)"
+writes {
+  update {
+    name: "projects/brandforge-489114/...  }
+    }
+    fields {
+      key: "asset_bundle_id"
+      value {
+        null_value: NULL_VALUE
+      }
+    }
+  }
+}
+,)
+kwargs = {'metadata': [('google-cloud-resource-prefix', 'projects/brandforge-489114/databases/(default)'), ('x-goog-request-par...efault%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')], 'timeout': 60.0}
+
+    @functools.wraps(callable_)
+    def error_remapped_callable(*args, **kwargs):
+>       call = callable_(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\google\api_core\grpc_helpers_async.py:166: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <grpc.aio._channel.UnaryUnaryMultiCallable object at 0x000001DAD0F040D0>
+request = database: "projects/brandforge-489114/databases/(default)"
+writes {
+  update {
+    name: "projects/brandforge-489114/d...    }
+    }
+    fields {
+      key: "asset_bundle_id"
+      value {
+        null_value: NULL_VALUE
+      }
+    }
+  }
+}
+
+
+    def __call__(
+        self,
+        request: RequestType,
+        *,
+        timeout: Optional[float] = None,
+        metadata: Optional[MetadataType] = None,
+        credentials: Optional[grpc.CallCredentials] = None,
+        wait_for_ready: Optional[bool] = None,
+        compression: Optional[grpc.Compression] = None,
+    ) -> _base_call.UnaryUnaryCall[RequestType, ResponseType]:
+        metadata = self._init_metadata(metadata, compression)
+        if not self._interceptors:
+            call = UnaryUnaryCall(
+                request,
+                _timeout_to_deadline(timeout),
+                metadata,
+                credentials,
+                wait_for_ready,
+                self._channel,
+                self._method,
+                self._request_serializer,
+                self._response_deserializer,
+                self._loop,
+            )
+        else:
+>           call = InterceptedUnaryUnaryCall(
+                self._interceptors,
+                request,
+                timeout,
+                metadata,
+                credentials,
+                wait_for_ready,
+                self._channel,
+                self._method,
+                self._request_serializer,
+                self._response_deserializer,
+                self._loop,
+            )
+
+.venv\Lib\site-packages\grpc\aio\_channel.py:165: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <grpc.aio._interceptor.InterceptedUnaryUnaryCall object at 0x000001DAD0D83E10>
+interceptors = [<google.cloud.firestore_v1.services.firestore.transports.grpc_asyncio._LoggingClientAIOInterceptor object at 0x000001DAD0FA3410>]
+request = database: "projects/brandforge-489114/databases/(default)"
+writes {
+  update {
+    name: "projects/brandforge-489114/d...    }
+    }
+    fields {
+      key: "asset_bundle_id"
+      value {
+        null_value: NULL_VALUE
+      }
+    }
+  }
+}
+
+timeout = 60.0
+metadata = Metadata((('google-cloud-resource-prefix', 'projects/brandforge-489114/databases/(default)'), ('x-goog-request-params'...14/databases/%28default%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')))
+credentials = None, wait_for_ready = None, channel = <AioChannel 2039320552192>
+method = b'/google.firestore.v1.Firestore/Commit'
+request_serializer = <bound method MessageMeta.serialize of <class 'google.cloud.firestore_v1.types.firestore.CommitRequest'>>
+response_deserializer = <bound method MessageMeta.deserialize of <class 'google.cloud.firestore_v1.types.firestore.CommitResponse'>>
+loop = <ProactorEventLoop running=False closed=True debug=False>
+
+    def __init__(
+        self,
+        interceptors: Sequence[UnaryUnaryClientInterceptor],
+        request: RequestType,
+        timeout: Optional[float],
+        metadata: Metadata,
+        credentials: Optional[grpc.CallCredentials],
+        wait_for_ready: Optional[bool],
+        channel: cygrpc.AioChannel,
+        method: bytes,
+        request_serializer: Optional[SerializingFunction],
+        response_deserializer: Optional[DeserializingFunction],
+        loop: asyncio.AbstractEventLoop,
+    ) -> None:
+        self._loop = loop
+        self._channel = channel
+>       interceptors_task = loop.create_task(
+            self._invoke(
+                interceptors,
+                method,
+                timeout,
+                metadata,
+                credentials,
+                wait_for_ready,
+                request,
+                request_serializer,
+                response_deserializer,
+            )
+        )
+
+.venv\Lib\site-packages\grpc\aio\_interceptor.py:640: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <ProactorEventLoop running=False closed=True debug=False>
+coro = <coroutine object InterceptedUnaryUnaryCall._invoke at 0x000001DAD0CAB740>
+
+    def create_task(self, coro, *, name=None, context=None):
+        """Schedule a coroutine object.
+    
+        Return a task object.
+        """
+>       self._check_closed()
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py:435: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <ProactorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py:520: RuntimeError
+_________________ test_firestore_get_nonexistent_returns_none _________________
+
+    @pytest.mark.asyncio
+    async def test_firestore_get_nonexistent_returns_none() -> None:
+        """Getting a document that doesn't exist should return None."""
+        fake_id = f"nonexistent-{uuid.uuid4()}"
+>       result = await get_document(FIRESTORE_COLLECTION_CAMPAIGNS, fake_id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\infra\test_firestore.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+collection = 'campaigns'
+doc_id = 'nonexistent-4c57c6ac-2395-4493-9bea-823df3886837'
+
+    async def get_document(
+        collection: str, doc_id: str
+    ) -> dict[str, Any] | None:
+        """Fetch a single Firestore document by ID.
+    
+        Args:
+            collection: The collection name.
+            doc_id: The document ID.
+    
+        Returns:
+            The document data as a dict, or None if not found.
+        """
+        client = get_firestore_client()
+        doc_ref = client.collection(collection).document(doc_id)
+>       doc = await doc_ref.get()
+              ^^^^^^^^^^^^^^^^^^^
+
+brandforge\shared\firestore.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <google.cloud.firestore_v1.async_document.AsyncDocumentReference object at 0x000001DAD23752D0>
+field_paths = None, transaction = None
+retry = <_MethodDefault._DEFAULT_VALUE: <object object at 0x000001DACDDE1B40>>
+timeout = None
+
+    async def get(
+        self,
+        field_paths: Iterable[str] | None = None,
+        transaction=None,
+        retry: retries.AsyncRetry | object | None = gapic_v1.method.DEFAULT,
+        timeout: float | None = None,
+        *,
+        read_time: datetime.datetime | None = None,
+    ) -> DocumentSnapshot:
+        """Retrieve a snapshot of the current document.
+    
+        See :meth:`~google.cloud.firestore_v1.base_client.BaseClient.field_path` for
+        more information on **field paths**.
+    
+        If a ``transaction`` is used and it already has write operations
+        added, this method cannot be used (i.e. read-after-write is not
+        allowed).
+    
+        Args:
+            field_paths (Optional[Iterable[str, ...]]): An iterable of field
+                paths (``.``-delimited list of field names) to use as a
+                projection of document fields in the returned results. If
+                no value is provided, all fields will be returned.
+            transaction (Optional[:class:`~google.cloud.firestore_v1.async_transaction.AsyncTransaction`]):
+                An existing transaction that this reference
+                will be retrieved in.
+            retry (google.api_core.retry.Retry): Designation of what errors, if any,
+                should be retried.  Defaults to a system-specified policy.
+            timeout (float): The timeout for this request.  Defaults to a
+                system-specified value.
+            read_time (Optional[datetime.datetime]): If set, reads documents as they were at the given
+                time. This must be a timestamp within the past one hour, or if Point-in-Time Recovery
+                is enabled, can additionally be a whole minute timestamp within the past 7 days. If no
+                timezone is specified in the :class:`datetime.datetime` object, it is assumed to be UTC.
+    
+        Returns:
+            :class:`~google.cloud.firestore_v1.base_document.DocumentSnapshot`:
+                A snapshot of the current document. If the document does not
+                exist at the time of the snapshot is taken, the snapshot's
+                :attr:`reference`, :attr:`data`, :attr:`update_time`, and
+                :attr:`create_time` attributes will all be ``None`` and
+                its :attr:`exists` attribute will be ``False``.
+        """
+        from google.cloud.firestore_v1.base_client import _parse_batch_get
+    
+        request, kwargs = self._prep_batch_get(
+            field_paths, transaction, retry, timeout, read_time
+        )
+    
+>       response_iter = await self._client._firestore_api.batch_get_documents(
+            request=request,
+            metadata=self._client._rpc_metadata,
+            **kwargs,
+        )
+
+.venv\Lib\site-packages\google\cloud\firestore_v1\async_document.py:375: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (database: "projects/brandforge-489114/databases/(default)"
+documents: "projects/brandforge-489114/databases/(default)/documents/campaigns/nonexistent-4c57c6ac-2395-4493-9bea-823df3886837"
+,)
+kwargs = {'metadata': [('google-cloud-resource-prefix', 'projects/brandforge-489114/databases/(default)'), ('x-goog-request-par...14/databases/%28default%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')]}
+sleep_generator = <generator object exponential_sleep_generator at 0x000001DAD0EDDB70>
+
+    @functools.wraps(func)
+    async def retry_wrapped_func(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        """A wrapper that calls target function with retry."""
+        sleep_generator = exponential_sleep_generator(
+            self._initial, self._maximum, multiplier=self._multiplier
+        )
+>       return await retry_target(
+            functools.partial(func, *args, **kwargs),
+            predicate=self._predicate,
+            sleep_generator=sleep_generator,
+            timeout=self._timeout,
+            on_error=on_error,
+        )
+
+.venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py:231: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+target = functools.partial(<function _wrap_stream_errors.<locals>.error_remapped_callable at 0x000001DAD0F76700>, database: "pr...14/databases/%28default%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')])
+predicate = <function if_exception_type.<locals>.if_exception_type_predicate at 0x000001DAD0EF7EC0>
+sleep_generator = <generator object exponential_sleep_generator at 0x000001DAD0EDDB70>
+timeout = 300.0, on_error = None
+exception_factory = <function build_retry_error at 0x000001DAD04C7E20>
+kwargs = {}, deadline = 190719.64
+error_list = [RuntimeError('Event loop is closed')]
+sleep_iter = <generator object exponential_sleep_generator at 0x000001DAD0EDDB70>
+
+    async def retry_target(
+        target: Callable[[], Awaitable[_R]],
+        predicate: Callable[[Exception], bool],
+        sleep_generator: Iterable[float],
+        timeout: float | None = None,
+        on_error: Callable[[Exception], None] | None = None,
+        exception_factory: Callable[
+            [list[Exception], RetryFailureReason, float | None],
+            tuple[Exception, Exception | None],
+        ] = build_retry_error,
+        **kwargs,
+    ):
+        """Await a coroutine and retry if it fails.
+    
+        This is the lowest-level retry helper. Generally, you'll use the
+        higher-level retry helper :class:`Retry`.
+    
+        Args:
+            target(Callable[[], Any]): The function to call and retry. This must be a
+                nullary function - apply arguments with `functools.partial`.
+            predicate (Callable[Exception]): A callable used to determine if an
+                exception raised by the target should be considered retryable.
+                It should return True to retry or False otherwise.
+            sleep_generator (Iterable[float]): An infinite iterator that determines
+                how long to sleep between retries.
+            timeout (Optional[float]): How long to keep retrying the target, in seconds.
+                Note: timeout is only checked before initiating a retry, so the target may
+                run past the timeout value as long as it is healthy.
+            on_error (Optional[Callable[Exception]]): If given, the on_error
+                callback will be called with each retryable exception raised by the
+                target. Any error raised by this function will *not* be caught.
+            exception_factory: A function that is called when the retryable reaches
+                a terminal failure state, used to construct an exception to be raised.
+                It takes a list of all exceptions encountered, a retry.RetryFailureReason
+                enum indicating the failure cause, and the original timeout value
+                as arguments. It should return a tuple of the exception to be raised,
+                along with the cause exception if any. The default implementation will raise
+                a RetryError on timeout, or the last exception encountered otherwise.
+            deadline (float): DEPRECATED use ``timeout`` instead. For backward
+                compatibility, if set it will override the ``timeout`` parameter.
+    
+        Returns:
+            Any: the return value of the target function.
+    
+        Raises:
+            ValueError: If the sleep generator stops yielding values.
+            Exception: a custom exception specified by the exception_factory if provided.
+                If no exception_factory is provided:
+                    google.api_core.RetryError: If the timeout is exceeded while retrying.
+                    Exception: If the target raises an error that isn't retryable.
+        """
+    
+        timeout = kwargs.get("deadline", timeout)
+    
+        deadline = time.monotonic() + timeout if timeout is not None else None
+        error_list: list[Exception] = []
+        sleep_iter = iter(sleep_generator)
+    
+        # continue trying until an attempt completes, or a terminal exception is raised in _retry_error_helper
+        # TODO: support max_attempts argument: https://github.com/googleapis/python-api-core/issues/535
+        while True:
+            try:
+                return await target()
+            # pylint: disable=broad-except
+            # This function explicitly must deal with broad exceptions.
+            except Exception as exc:
+                # defer to shared logic for handling errors
+>               next_sleep = _retry_error_helper(
+                    exc,
+                    deadline,
+                    sleep_iter,
+                    error_list,
+                    predicate,
+                    on_error,
+                    exception_factory,
+                    timeout,
+                )
+
+.venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+exc = RuntimeError('Event loop is closed'), deadline = 190719.64
+sleep_iterator = <generator object exponential_sleep_generator at 0x000001DAD0EDDB70>
+error_list = [RuntimeError('Event loop is closed')]
+predicate_fn = <function if_exception_type.<locals>.if_exception_type_predicate at 0x000001DAD0EF7EC0>
+on_error_fn = None
+exc_factory_fn = <function build_retry_error at 0x000001DAD04C7E20>
+original_timeout = 300.0
+
+    def _retry_error_helper(
+        exc: Exception,
+        deadline: float | None,
+        sleep_iterator: Iterator[float],
+        error_list: list[Exception],
+        predicate_fn: Callable[[Exception], bool],
+        on_error_fn: Callable[[Exception], None] | None,
+        exc_factory_fn: Callable[
+            [list[Exception], RetryFailureReason, float | None],
+            tuple[Exception, Exception | None],
+        ],
+        original_timeout: float | None,
+    ) -> float:
+        """
+        Shared logic for handling an error for all retry implementations
+    
+        - Raises an error on timeout or non-retryable error
+        - Calls on_error_fn if provided
+        - Logs the error
+    
+        Args:
+           - exc: the exception that was raised
+           - deadline: the deadline for the retry, calculated as a diff from time.monotonic()
+           - sleep_iterator: iterator to draw the next backoff value from
+           - error_list: the list of exceptions that have been raised so far
+           - predicate_fn: takes `exc` and returns true if the operation should be retried
+           - on_error_fn: callback to execute when a retryable error occurs
+           - exc_factory_fn: callback used to build the exception to be raised on terminal failure
+           - original_timeout_val: the original timeout value for the retry (in seconds),
+               to be passed to the exception factory for building an error message
+        Returns:
+            - the sleep value chosen before the next attempt
+        """
+        error_list.append(exc)
+        if not predicate_fn(exc):
+            final_exc, source_exc = exc_factory_fn(
+                error_list,
+                RetryFailureReason.NON_RETRYABLE_ERROR,
+                original_timeout,
+            )
+>           raise final_exc from source_exc
+
+.venv\Lib\site-packages\google\api_core\retry\retry_base.py:216: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+target = functools.partial(<function _wrap_stream_errors.<locals>.error_remapped_callable at 0x000001DAD0F76700>, database: "pr...14/databases/%28default%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')])
+predicate = <function if_exception_type.<locals>.if_exception_type_predicate at 0x000001DAD0EF7EC0>
+sleep_generator = <generator object exponential_sleep_generator at 0x000001DAD0EDDB70>
+timeout = 300.0, on_error = None
+exception_factory = <function build_retry_error at 0x000001DAD04C7E20>
+kwargs = {}, deadline = 190719.64
+error_list = [RuntimeError('Event loop is closed')]
+sleep_iter = <generator object exponential_sleep_generator at 0x000001DAD0EDDB70>
+
+    async def retry_target(
+        target: Callable[[], Awaitable[_R]],
+        predicate: Callable[[Exception], bool],
+        sleep_generator: Iterable[float],
+        timeout: float | None = None,
+        on_error: Callable[[Exception], None] | None = None,
+        exception_factory: Callable[
+            [list[Exception], RetryFailureReason, float | None],
+            tuple[Exception, Exception | None],
+        ] = build_retry_error,
+        **kwargs,
+    ):
+        """Await a coroutine and retry if it fails.
+    
+        This is the lowest-level retry helper. Generally, you'll use the
+        higher-level retry helper :class:`Retry`.
+    
+        Args:
+            target(Callable[[], Any]): The function to call and retry. This must be a
+                nullary function - apply arguments with `functools.partial`.
+            predicate (Callable[Exception]): A callable used to determine if an
+                exception raised by the target should be considered retryable.
+                It should return True to retry or False otherwise.
+            sleep_generator (Iterable[float]): An infinite iterator that determines
+                how long to sleep between retries.
+            timeout (Optional[float]): How long to keep retrying the target, in seconds.
+                Note: timeout is only checked before initiating a retry, so the target may
+                run past the timeout value as long as it is healthy.
+            on_error (Optional[Callable[Exception]]): If given, the on_error
+                callback will be called with each retryable exception raised by the
+                target. Any error raised by this function will *not* be caught.
+            exception_factory: A function that is called when the retryable reaches
+                a terminal failure state, used to construct an exception to be raised.
+                It takes a list of all exceptions encountered, a retry.RetryFailureReason
+                enum indicating the failure cause, and the original timeout value
+                as arguments. It should return a tuple of the exception to be raised,
+                along with the cause exception if any. The default implementation will raise
+                a RetryError on timeout, or the last exception encountered otherwise.
+            deadline (float): DEPRECATED use ``timeout`` instead. For backward
+                compatibility, if set it will override the ``timeout`` parameter.
+    
+        Returns:
+            Any: the return value of the target function.
+    
+        Raises:
+            ValueError: If the sleep generator stops yielding values.
+            Exception: a custom exception specified by the exception_factory if provided.
+                If no exception_factory is provided:
+                    google.api_core.RetryError: If the timeout is exceeded while retrying.
+                    Exception: If the target raises an error that isn't retryable.
+        """
+    
+        timeout = kwargs.get("deadline", timeout)
+    
+        deadline = time.monotonic() + timeout if timeout is not None else None
+        error_list: list[Exception] = []
+        sleep_iter = iter(sleep_generator)
+    
+        # continue trying until an attempt completes, or a terminal exception is raised in _retry_error_helper
+        # TODO: support max_attempts argument: https://github.com/googleapis/python-api-core/issues/535
+        while True:
+            try:
+>               return await target()
+                       ^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\google\api_core\retry\retry_unary_async.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (database: "projects/brandforge-489114/databases/(default)"
+documents: "projects/brandforge-489114/databases/(default)/documents/campaigns/nonexistent-4c57c6ac-2395-4493-9bea-823df3886837"
+,)
+kwargs = {'metadata': [('google-cloud-resource-prefix', 'projects/brandforge-489114/databases/(default)'), ('x-goog-request-par...fault%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')], 'timeout': 300.0}
+
+    @functools.wraps(callable_)
+    async def error_remapped_callable(*args, **kwargs):
+>       call = callable_(*args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.venv\Lib\site-packages\google\api_core\grpc_helpers_async.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <grpc.aio._channel.UnaryStreamMultiCallable object at 0x000001DAD0F04710>
+request = database: "projects/brandforge-489114/databases/(default)"
+documents: "projects/brandforge-489114/databases/(default)/documents/campaigns/nonexistent-4c57c6ac-2395-4493-9bea-823df3886837"
+
+
+    def __call__(
+        self,
+        request: RequestType,
+        *,
+        timeout: Optional[float] = None,
+        metadata: Optional[MetadataType] = None,
+        credentials: Optional[grpc.CallCredentials] = None,
+        wait_for_ready: Optional[bool] = None,
+        compression: Optional[grpc.Compression] = None,
+    ) -> _base_call.UnaryStreamCall[RequestType, ResponseType]:
+        metadata = self._init_metadata(metadata, compression)
+    
+        if not self._interceptors:
+>           call = UnaryStreamCall(
+                request,
+                _timeout_to_deadline(timeout),
+                metadata,
+                credentials,
+                wait_for_ready,
+                self._channel,
+                self._method,
+                self._request_serializer,
+                self._response_deserializer,
+                self._loop,
+            )
+
+.venv\Lib\site-packages\grpc\aio\_channel.py:198: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <_AioCall object>
+request = database: "projects/brandforge-489114/databases/(default)"
+documents: "projects/brandforge-489114/databases/(default)/documents/campaigns/nonexistent-4c57c6ac-2395-4493-9bea-823df3886837"
+
+deadline = 1772711880.1659298
+metadata = Metadata((('google-cloud-resource-prefix', 'projects/brandforge-489114/databases/(default)'), ('x-goog-request-params'...14/databases/%28default%29'), ('x-goog-api-client', 'gl-python/3.11.9 grpc/1.78.0 gax/2.30.0 gapic/2.23.0 pb/6.33.5')))
+credentials = None, wait_for_ready = None, channel = <AioChannel 2039320552192>
+method = b'/google.firestore.v1.Firestore/BatchGetDocuments'
+request_serializer = <bound method MessageMeta.serialize of <class 'google.cloud.firestore_v1.types.firestore.BatchGetDocumentsRequest'>>
+response_deserializer = <bound method MessageMeta.deserialize of <class 'google.cloud.firestore_v1.types.firestore.BatchGetDocumentsResponse'>>
+loop = <ProactorEventLoop running=False closed=True debug=False>
+
+    def __init__(
+        self,
+        request: RequestType,
+        deadline: Optional[float],
+        metadata: Metadata,
+        credentials: Optional[grpc.CallCredentials],
+        wait_for_ready: Optional[bool],
+        channel: cygrpc.AioChannel,
+        method: bytes,
+        request_serializer: Optional[SerializingFunction],
+        response_deserializer: Optional[DeserializingFunction],
+        loop: asyncio.AbstractEventLoop,
+    ) -> None:
+        super().__init__(
+            channel.call(method, deadline, credentials, wait_for_ready),
+            metadata,
+            request_serializer,
+            response_deserializer,
+            loop,
+        )
+        self._request = request
+        self._context = cygrpc.build_census_context()
+>       self._send_unary_request_task = loop.create_task(
+            self._send_unary_request()
+        )
+
+.venv\Lib\site-packages\grpc\aio\_call.py:632: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <ProactorEventLoop running=False closed=True debug=False>
+coro = <coroutine object UnaryStreamCall._send_unary_request at 0x000001DAD0D3B840>
+
+    def create_task(self, coro, *, name=None, context=None):
+        """Schedule a coroutine object.
+    
+        Return a task object.
+        """
+>       self._check_closed()
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py:435: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <ProactorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\asyncio\base_events.py:520: RuntimeError
+__________________________ test_generates_six_images __________________________
+
+    @pytest.mark.asyncio
+    async def test_generates_six_images() -> None:
+        """Mood board produces exactly 6 reference images."""
+        mock_get_doc = AsyncMock(return_value=SAMPLE_BRAND_DNA)
+        mock_upload = AsyncMock(side_effect=lambda **kw: f"gs://bucket/{kw['destination_path']}")
+        mock_create_doc = AsyncMock(return_value="doc-id")
+        mock_client = _make_image_response_mock()
+    
+>       with (
+            patch("brandforge.shared.firestore.get_document", mock_get_doc),
+            patch("brandforge.shared.firestore.create_document", mock_create_doc),
+            patch("brandforge.shared.storage.upload_blob", mock_upload),
+            patch(
+                "brandforge.agents.mood_board_director.tools.genai.Client",
+                return_value=mock_client,
+            ),
+        ):
+
+tests\mood_board_director\test_moodboard.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <unittest.mock._patch object at 0x000001DAD0D5D250>
+
+    def __enter__(self):
+        """Perform the patch."""
+        new, spec, spec_set = self.new, self.spec, self.spec_set
+        autospec, kwargs = self.autospec, self.kwargs
+        new_callable = self.new_callable
+>       self.target = self.getter()
+                      ^^^^^^^^^^^^^
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py:1430: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'brandforge.agents.mood_board_director.tools.genai'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P<pkg>{dotted_words})'
+                                       f'(?P<cln>:(?P<obj>{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+>           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'brandforge.agents.mood_board_director.tools' has no attribute 'genai'
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\pkgutil.py:715: AttributeError
+____________________________ test_veo_poll_timeout ____________________________
+
+    @pytest.mark.asyncio
+    async def test_veo_poll_timeout() -> None:
+        """10-min timeout \u2192 failed status + error message."""
+        # Mock an operation that never completes
+        mock_op = MagicMock()
+        mock_op.done = False
+    
+        mock_client = MagicMock()
+        mock_client.get_operation = MagicMock(return_value=mock_op)
+    
+>       with patch(
+            "brandforge.agents.video_producer.tools.aiplatform.gapic.PredictionServiceClient",
+            return_value=mock_client,
+        ):
+
+tests\video_producer\test_videoproducer.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <unittest.mock._patch object at 0x000001DAD2AB9210>
+
+    def __enter__(self):
+        """Perform the patch."""
+        new, spec, spec_set = self.new, self.spec, self.spec_set
+        autospec, kwargs = self.autospec, self.kwargs
+        new_callable = self.new_callable
+>       self.target = self.getter()
+                      ^^^^^^^^^^^^^
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py:1430: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'brandforge.agents.video_producer.tools.aiplatform.gapic'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P<pkg>{dotted_words})'
+                                       f'(?P<cln>:(?P<obj>{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+>           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'brandforge.agents.video_producer.tools' has no attribute 'aiplatform'
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\pkgutil.py:715: AttributeError
+___________________________ test_generates_variants ___________________________
+
+    @pytest.mark.asyncio
+    async def test_generates_variants() -> None:
+        """3 variants returned per product ╫ model combination."""
+        mock_get_doc = AsyncMock(return_value=SAMPLE_FASHION_BRAND_DNA)
+        mock_download = AsyncMock(return_value=b"\x89PNG" + b"\x00" * 200)
+        mock_upload = AsyncMock(side_effect=lambda **kw: f"gs://bucket/{kw['destination_path']}")
+        mock_tryon_client = _mock_tryon_response()
+    
+>       with (
+            patch("brandforge.shared.firestore.get_document", mock_get_doc),
+            patch("brandforge.shared.storage.download_blob", mock_download),
+            patch("brandforge.shared.storage.upload_blob", mock_upload),
+            patch(
+                "brandforge.agents.virtual_tryon.tools.aiplatform.gapic.PredictionServiceClient",
+                return_value=mock_tryon_client,
+            ),
+        ):
+
+tests\virtual_tryon\test_tryon.py:85: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <unittest.mock._patch object at 0x000001DAD0DEB510>
+
+    def __enter__(self):
+        """Perform the patch."""
+        new, spec, spec_set = self.new, self.spec, self.spec_set
+        autospec, kwargs = self.autospec, self.kwargs
+        new_callable = self.new_callable
+>       self.target = self.getter()
+                      ^^^^^^^^^^^^^
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py:1430: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'brandforge.agents.virtual_tryon.tools.aiplatform.gapic'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P<pkg>{dotted_words})'
+                                       f'(?P<cln>:(?P<obj>{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+>           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'brandforge.agents.virtual_tryon.tools' has no attribute 'aiplatform'
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\pkgutil.py:715: AttributeError
+__________________________ test_gcs_upload_complete ___________________________
+
+    @pytest.mark.asyncio
+    async def test_gcs_upload_complete() -> None:
+        """All generated try-on images have populated GCS URLs."""
+        mock_get_doc = AsyncMock(return_value=SAMPLE_FASHION_BRAND_DNA)
+        mock_download = AsyncMock(return_value=b"\x89PNG" + b"\x00" * 200)
+        mock_upload = AsyncMock(side_effect=lambda **kw: f"gs://bucket/{kw['destination_path']}")
+        mock_tryon_client = _mock_tryon_response()
+    
+>       with (
+            patch("brandforge.shared.firestore.get_document", mock_get_doc),
+            patch("brandforge.shared.storage.download_blob", mock_download),
+            patch("brandforge.shared.storage.upload_blob", mock_upload),
+            patch(
+                "brandforge.agents.virtual_tryon.tools.aiplatform.gapic.PredictionServiceClient",
+                return_value=mock_tryon_client,
+            ),
+        ):
+
+tests\virtual_tryon\test_tryon.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <unittest.mock._patch object at 0x000001DAD2CAD490>
+
+    def __enter__(self):
+        """Perform the patch."""
+        new, spec, spec_set = self.new, self.spec, self.spec_set
+        autospec, kwargs = self.autospec, self.kwargs
+        new_callable = self.new_callable
+>       self.target = self.getter()
+                      ^^^^^^^^^^^^^
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\unittest\mock.py:1430: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'brandforge.agents.virtual_tryon.tools.aiplatform.gapic'
+
+    def resolve_name(name):
+        """
+        Resolve a name to an object.
+    
+        It is expected that `name` will be a string in one of the following
+        formats, where W is shorthand for a valid Python identifier and dot stands
+        for a literal period in these pseudo-regexes:
+    
+        W(.W)*
+        W(.W)*:(W(.W)*)?
+    
+        The first form is intended for backward compatibility only. It assumes that
+        some part of the dotted name is a package, and the rest is an object
+        somewhere within that package, possibly nested inside other objects.
+        Because the place where the package stops and the object hierarchy starts
+        can't be inferred by inspection, repeated attempts to import must be done
+        with this form.
+    
+        In the second form, the caller makes the division point clear through the
+        provision of a single colon: the dotted name to the left of the colon is a
+        package to be imported, and the dotted name to the right is the object
+        hierarchy within that package. Only one import is needed in this form. If
+        it ends with the colon, then a module object is returned.
+    
+        The function will return an object (which might be a module), or raise one
+        of the following exceptions:
+    
+        ValueError - if `name` isn't in a recognised format
+        ImportError - if an import failed when it shouldn't have
+        AttributeError - if a failure occurred when traversing the object hierarchy
+                         within the imported package to get to the desired object.
+        """
+        global _NAME_PATTERN
+        if _NAME_PATTERN is None:
+            # Lazy import to speedup Python startup time
+            import re
+            dotted_words = r'(?!\d)(\w+)(\.(?!\d)(\w+))*'
+            _NAME_PATTERN = re.compile(f'^(?P<pkg>{dotted_words})'
+                                       f'(?P<cln>:(?P<obj>{dotted_words})?)?$',
+                                       re.UNICODE)
+    
+        m = _NAME_PATTERN.match(name)
+        if not m:
+            raise ValueError(f'invalid format: {name!r}')
+        gd = m.groupdict()
+        if gd.get('cln'):
+            # there is a colon - a one-step import is all that's needed
+            mod = importlib.import_module(gd['pkg'])
+            parts = gd.get('obj')
+            parts = parts.split('.') if parts else []
+        else:
+            # no colon - have to iterate to find the package boundary
+            parts = name.split('.')
+            modname = parts.pop(0)
+            # first part *must* be a module/package.
+            mod = importlib.import_module(modname)
+            while parts:
+                p = parts[0]
+                s = f'{modname}.{p}'
+                try:
+                    mod = importlib.import_module(s)
+                    parts.pop(0)
+                    modname = s
+                except ImportError:
+                    break
+        # if we reach this point, mod is the module, already imported, and
+        # parts is the list of parts in the object hierarchy to be traversed, or
+        # an empty list if just the module is wanted.
+        result = mod
+        for p in parts:
+>           result = getattr(result, p)
+                     ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'brandforge.agents.virtual_tryon.tools' has no attribute 'aiplatform'
+
+..\..\..\..\AppData\Local\Programs\Python\Python311\Lib\pkgutil.py:715: AttributeError
+============================== warnings summary ===============================
+tests/scriptwriter/test_scriptwriter.py::test_script_schema_valid
+  C:\Users\aibra\AppData\Local\Programs\Python\Python311\Lib\tokenize.py:317: RuntimeWarning: coroutine 'InterceptedUnaryUnaryCall._invoke' was never awaited
+    filename = readline.__self__.name
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/scriptwriter/test_scriptwriter.py::test_script_schema_valid
+  C:\Users\aibra\AppData\Local\Programs\Python\Python311\Lib\tokenize.py:317: RuntimeWarning: coroutine 'UnaryStreamCall._send_unary_request' was never awaited
+    filename = readline.__self__.name
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/scriptwriter/test_scriptwriter.py::test_script_schema_valid
+  C:\Users\aibra\.gemini\antigravity\scratch\BrandForge\.venv\Lib\site-packages\_pytest\unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored in: <function InterceptedCall.__del__ at 0x000001DAD0415A80>
+  
+  Traceback (most recent call last):
+    File "C:\Users\aibra\.gemini\antigravity\scratch\BrandForge\.venv\Lib\site-packages\grpc\aio\_interceptor.py", line 322, in __del__
+      self.cancel()
+    File "C:\Users\aibra\.gemini\antigravity\scratch\BrandForge\.venv\Lib\site-packages\grpc\aio\_interceptor.py", line 357, in cancel
+      if not self._interceptors_task.done():
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  AttributeError: 'InterceptedUnaryUnaryCall' object has no attribute '_interceptors_task'
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/image_generator/test_imagegen.py::test_all_platform_specs_covered
+FAILED tests/image_generator/test_imagegen.py::test_three_variants_per_spec
+FAILED tests/image_generator/test_imagegen.py::test_gcs_upload_complete - Att...
+FAILED tests/infra/test_firestore.py::test_firestore_update_campaign_status
+FAILED tests/infra/test_firestore.py::test_firestore_get_nonexistent_returns_none
+FAILED tests/mood_board_director/test_moodboard.py::test_generates_six_images
+FAILED tests/video_producer/test_videoproducer.py::test_veo_poll_timeout - At...
+FAILED tests/virtual_tryon/test_tryon.py::test_generates_variants - Attribute...
+FAILED tests/virtual_tryon/test_tryon.py::test_gcs_upload_complete - Attribut...
+============= 9 failed, 42 passed, 3 warnings in 61.06s (0:01:01) =============
