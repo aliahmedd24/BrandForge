@@ -238,3 +238,270 @@ class VisualAssetAnalysis(BaseModel):
     recommended_direction: str = Field(
         description="Recommended visual direction based on asset analysis."
     )
+
+
+# ── Phase 2: Creative Production ──────────────────────────────────────────
+
+
+class SceneDirection(BaseModel):
+    """A single scene in a video script with visual and audio direction."""
+
+    scene_number: int = Field(ge=1, description="Scene sequence number starting at 1.")
+    duration_seconds: int = Field(
+        ge=1, le=60, description="Duration of this scene in seconds."
+    )
+    visual_description: str = Field(
+        description="Detailed description of what appears on screen. "
+        "Must be specific enough for Veo to generate the scene."
+    )
+    voiceover: str = Field(description="Exact narration text for this scene.")
+    text_overlay: str | None = Field(
+        default=None, description="On-screen text overlay, if any."
+    )
+    emotion: str = Field(
+        description="Intended emotional beat, e.g. 'warm', 'urgent', 'aspirational'."
+    )
+
+
+class VideoScript(BaseModel):
+    """A complete video script for a specific platform and duration."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    campaign_id: str = Field(description="FK → Campaign document.")
+    platform: Platform = Field(description="Target platform for this script.")
+    duration_seconds: int = Field(
+        description="Total duration: 15, 30, or 60 seconds."
+    )
+    aspect_ratio: str = Field(
+        description="Video aspect ratio: '9:16', '1:1', or '16:9'."
+    )
+    hook: str = Field(
+        max_length=200,
+        description="First 3 seconds hook — must grab attention immediately.",
+    )
+    scenes: list[SceneDirection] = Field(
+        description="Ordered list of scene directions."
+    )
+    cta: str = Field(
+        max_length=100, description="Call to action text."
+    )
+    brand_dna_version: int = Field(
+        description="Version of the BrandDNA document used for generation."
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    @field_validator("scenes")
+    @classmethod
+    def validate_scenes_not_empty(cls, v: list[SceneDirection]) -> list[SceneDirection]:
+        """Ensure at least one scene exists in the script."""
+        if not v:
+            raise ValueError("VideoScript must have at least one scene.")
+        return v
+
+    @field_validator("duration_seconds")
+    @classmethod
+    def validate_duration(cls, v: int) -> int:
+        """Ensure duration is one of the allowed values."""
+        if v not in (15, 30, 60):
+            raise ValueError(f"Duration must be 15, 30, or 60. Got {v}.")
+        return v
+
+
+class ImageSpec(BaseModel):
+    """Platform-specific image generation specification."""
+
+    platform: Platform = Field(description="Target platform.")
+    width: int = Field(ge=100, le=4096, description="Image width in pixels.")
+    height: int = Field(ge=100, le=4096, description="Image height in pixels.")
+    aspect_ratio: str = Field(description="Aspect ratio string, e.g. '1:1', '9:16'.")
+    use_case: str = Field(
+        description="Image use case: 'feed_post', 'story', 'banner', 'reel_cover'."
+    )
+
+    @classmethod
+    def default_specs_for_platform(cls, platform: Platform) -> list[ImageSpec]:
+        """Return the default image specs for a given platform per PRD table."""
+        specs_map: dict[Platform, list[dict]] = {  # type: ignore[type-arg]
+            Platform.INSTAGRAM: [
+                {"width": 1080, "height": 1080, "aspect_ratio": "1:1", "use_case": "feed_post"},
+                {"width": 1080, "height": 1920, "aspect_ratio": "9:16", "use_case": "story"},
+            ],
+            Platform.LINKEDIN: [
+                {"width": 1200, "height": 627, "aspect_ratio": "16:9", "use_case": "feed_post"},
+            ],
+            Platform.TWITTER_X: [
+                {"width": 1600, "height": 900, "aspect_ratio": "16:9", "use_case": "feed_post"},
+            ],
+            Platform.FACEBOOK: [
+                {"width": 1080, "height": 1080, "aspect_ratio": "1:1", "use_case": "feed_post"},
+                {"width": 1200, "height": 630, "aspect_ratio": "16:9", "use_case": "banner"},
+            ],
+            Platform.TIKTOK: [
+                {"width": 1080, "height": 1920, "aspect_ratio": "9:16", "use_case": "feed_post"},
+            ],
+            Platform.YOUTUBE: [
+                {"width": 1280, "height": 720, "aspect_ratio": "16:9", "use_case": "thumbnail"},
+            ],
+        }
+        return [
+            cls(platform=platform, **spec)
+            for spec in specs_map.get(platform, [])
+        ]
+
+
+class GeneratedImage(BaseModel):
+    """A production image generated via Imagen 4.0 Ultra."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    campaign_id: str = Field(description="FK → Campaign document.")
+    platform: Platform = Field(description="Target platform.")
+    spec: ImageSpec = Field(description="The image spec used for generation.")
+    gcs_url: str = Field(description="GCS URL of the generated image.")
+    variant_number: int = Field(
+        ge=1, le=3, description="Variant number (1=A, 2=B, 3=C) for A/B testing."
+    )
+    generation_prompt: str = Field(
+        description="Full Imagen prompt used — stored for QA traceability."
+    )
+    brand_dna_version: int = Field(
+        description="Version of the BrandDNA document used."
+    )
+    qa_status: str = Field(default="pending", description="QA status: pending/approved/rejected.")
+    qa_score: float | None = Field(default=None, ge=0.0, le=1.0, description="QA score 0.0-1.0.")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class VoiceConfig(BaseModel):
+    """Cloud TTS voice configuration for voiceover generation."""
+
+    language_code: str = Field(default="en-US", description="BCP-47 language code.")
+    voice_name: str = Field(
+        default="en-US-Neural2-D",
+        description="Cloud TTS voice name. Default: warm male Neural2 voice.",
+    )
+    speaking_rate: float = Field(
+        default=1.0, ge=0.25, le=4.0, description="Speech rate multiplier."
+    )
+    pitch: float = Field(
+        default=0.0, ge=-20.0, le=20.0, description="Pitch shift in semitones."
+    )
+
+
+class GeneratedVideo(BaseModel):
+    """A video asset generated via Veo 3.1 with Cloud TTS voiceover."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    campaign_id: str = Field(description="FK → Campaign document.")
+    script_id: str = Field(description="FK → VideoScript document.")
+    platform: Platform = Field(description="Target platform.")
+    duration_seconds: int = Field(description="Video duration in seconds.")
+    aspect_ratio: str = Field(description="Video aspect ratio.")
+    gcs_url_raw: str = Field(description="GCS URL of Veo raw output (no audio).")
+    gcs_url_final: str = Field(
+        default="", description="GCS URL of final video with voiceover."
+    )
+    operation_id: str = Field(description="Veo operation ID for tracking.")
+    generation_status: str = Field(
+        default="pending",
+        description="Generation status: pending/processing/complete/failed.",
+    )
+    voice_config: VoiceConfig = Field(
+        default_factory=VoiceConfig, description="TTS configuration used."
+    )
+    qa_status: str = Field(default="pending", description="QA status: pending/approved/rejected.")
+    qa_score: float | None = Field(default=None, ge=0.0, le=1.0, description="QA score 0.0-1.0.")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class PlatformCopy(BaseModel):
+    """Platform-specific marketing copy bundle."""
+
+    platform: Platform = Field(description="Target platform.")
+    caption: str = Field(description="Main post caption text.")
+    headline: str = Field(max_length=150, description="Post headline or title.")
+    hashtags: list[str] = Field(description="Hashtags (platform limits enforced by validator).")
+    cta_text: str = Field(max_length=50, description="Call-to-action text.")
+    character_count: int = Field(ge=0, description="Total caption character count.")
+    brand_voice_score: float = Field(
+        ge=0.0, le=1.0,
+        description="Brand voice alignment score (0.0-1.0), self-assessed by Gemini.",
+    )
+
+    @field_validator("hashtags")
+    @classmethod
+    def validate_hashtag_limits(cls, v: list[str], info) -> list[str]:  # type: ignore[type-arg]
+        """Enforce platform-specific hashtag count limits."""
+        platform = info.data.get("platform")
+        if platform == Platform.INSTAGRAM and len(v) > 30:
+            raise ValueError(f"Instagram max 30 hashtags, got {len(v)}.")
+        if platform == Platform.LINKEDIN and len(v) > 5:
+            raise ValueError(f"LinkedIn max 5 hashtags, got {len(v)}.")
+        return v
+
+    @field_validator("caption")
+    @classmethod
+    def validate_caption_length(cls, v: str, info) -> str:  # type: ignore[type-arg]
+        """Enforce platform-specific caption character limits."""
+        platform = info.data.get("platform")
+        limits = {
+            Platform.INSTAGRAM: 2200,
+            Platform.TWITTER_X: 280,
+            Platform.LINKEDIN: 3000,
+            Platform.TIKTOK: 2200,
+            Platform.FACEBOOK: 63206,
+            Platform.YOUTUBE: 5000,
+        }
+        max_len = limits.get(platform, 5000)
+        if len(v) > max_len:
+            raise ValueError(
+                f"{platform} caption max {max_len} chars, got {len(v)}."
+            )
+        return v
+
+
+class CopyPackage(BaseModel):
+    """Complete marketing copy package for all platforms in a campaign."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    campaign_id: str = Field(description="FK → Campaign document.")
+    platform_copies: list[PlatformCopy] = Field(
+        description="Per-platform copy bundles."
+    )
+    global_tagline: str = Field(
+        max_length=100, description="Campaign tagline — one memorable line."
+    )
+    press_blurb: str = Field(
+        max_length=700, description="100-word brand description for press."
+    )
+    qa_status: str = Field(default="pending", description="QA status: pending/approved/rejected.")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class GeneratedTryOn(BaseModel):
+    """A virtual try-on image generated via virtual-try-on-001."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    campaign_id: str = Field(description="FK → Campaign document.")
+    product_image_gcs: str = Field(description="GCS URL of the product garment image.")
+    model_image_gcs: str = Field(description="GCS URL of the model reference image.")
+    gcs_url: str = Field(description="GCS URL of the generated try-on image.")
+    variant_number: int = Field(
+        ge=1, le=3, description="Variant number for this combination."
+    )
+    qa_status: str = Field(default="pending", description="QA status: pending/approved/rejected.")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class MoodBoardImage(BaseModel):
+    """A single reference image in a mood board."""
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    campaign_id: str = Field(description="FK → Campaign document.")
+    category: str = Field(
+        description="Image category: 'lifestyle', 'texture', 'typography', 'color_palette'."
+    )
+    gcs_url: str = Field(description="GCS URL of the reference image.")
+    generation_prompt: str = Field(
+        description="Prompt used to generate this image."
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)

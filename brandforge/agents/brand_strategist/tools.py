@@ -26,6 +26,7 @@ from brandforge.shared.models import (
     BrandDNA,
     VisualAssetAnalysis,
 )
+from brandforge.shared.utils import gcs_uri_to_blob_path, guess_mime_type, strip_json_fences
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ async def transcribe_voice_brief(
         from brandforge.shared.storage import download_blob
 
         # Strip gs://bucket/ prefix to get the blob path
-        blob_path = _gcs_uri_to_blob_path(voice_brief_url)
+        blob_path = gcs_uri_to_blob_path(voice_brief_url)
         audio_bytes = await asyncio.wait_for(
             download_blob(blob_path),
             timeout=_TRANSCRIPTION_TIMEOUT_SECONDS,
@@ -166,9 +167,9 @@ async def analyze_brand_assets(
         # Download all images
         image_parts: list[types.Part] = []
         for url in asset_urls:
-            blob_path = _gcs_uri_to_blob_path(url)
+            blob_path = gcs_uri_to_blob_path(url)
             image_bytes = await download_blob(blob_path)
-            mime_type = _guess_mime_type(blob_path)
+            mime_type = guess_mime_type(blob_path)
             image_parts.append(
                 types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
             )
@@ -186,7 +187,7 @@ async def analyze_brand_assets(
 
         raw_text = response.text.strip()
         # Strip markdown fences if model includes them
-        raw_text = _strip_json_fences(raw_text)
+        raw_text = strip_json_fences(raw_text)
         analysis_data = json.loads(raw_text)
         analysis = VisualAssetAnalysis(**analysis_data)
 
@@ -264,7 +265,7 @@ async def generate_brand_dna(
         )
 
         raw_text = response.text.strip()
-        raw_text = _strip_json_fences(raw_text)
+        raw_text = strip_json_fences(raw_text)
         brand_dna_data = json.loads(raw_text)
 
         # Inject campaign_id and generate id
@@ -382,63 +383,6 @@ async def store_brand_dna(
         )
         return {"status": "error", "error": str(exc)}
 
-
-# ---------------------------------------------------------------------------
-# Helpers (private)
-# ---------------------------------------------------------------------------
-
-
-def _gcs_uri_to_blob_path(gcs_uri: str) -> str:
-    """Convert a gs://bucket/path URI to just the blob path.
-
-    Args:
-        gcs_uri: Full GCS URI, e.g. 'gs://brandforge-assets/campaigns/abc/voice.webm'.
-
-    Returns:
-        The blob path after the bucket name, e.g. 'campaigns/abc/voice.webm'.
-    """
-    if gcs_uri.startswith("gs://"):
-        parts = gcs_uri[5:].split("/", 1)
-        return parts[1] if len(parts) > 1 else ""
-    return gcs_uri
-
-
-def _guess_mime_type(blob_path: str) -> str:
-    """Guess MIME type from file extension.
-
-    Args:
-        blob_path: The GCS blob path.
-
-    Returns:
-        MIME type string.
-    """
-    lower = blob_path.lower()
-    if lower.endswith(".png"):
-        return "image/png"
-    if lower.endswith(".webp"):
-        return "image/webp"
-    if lower.endswith(".gif"):
-        return "image/gif"
-    return "image/jpeg"
-
-
-def _strip_json_fences(text: str) -> str:
-    """Remove markdown JSON code fences if present.
-
-    Args:
-        text: Raw text possibly wrapped in ```json ... ```.
-
-    Returns:
-        Clean JSON string.
-    """
-    text = text.strip()
-    if text.startswith("```json"):
-        text = text[7:]
-    elif text.startswith("```"):
-        text = text[3:]
-    if text.endswith("```"):
-        text = text[:-3]
-    return text.strip()
 
 
 def _build_brand_dna_user_prompt(
