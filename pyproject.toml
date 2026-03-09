@@ -1,0 +1,36 @@
+[project]
+name = "brandforge"
+version = "0.1.0"
+description = "AI-Powered Multi-Agent Marketing Platform"
+requires-python = "==3.11.*"
+dependencies = [
+    "google-adk>=0.3.0",
+    "google-adk[a2a]",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "google-cloud-firestore>=2.16.0",
+    "google-cloud-storage>=2.14.0",
+    "google-cloud-pubsub>=2.21.0",
+    "google-cloud-secret-manager>=2.18.0",
+    "google-cloud-logging>=3.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-asyncio>=0.23",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["brandforge*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "gcp: marks tests requiring live GCP services (deselect with '-m \"not gcp\"')",
+    "llm: marks tests requiring live Gemini API calls (deselect with '-m \"not llm\"')",
+]

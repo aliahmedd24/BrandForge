@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+credentials.json
+service-account*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# uv / pip
+uv.lock
+pip-log.txt
+
+# Internal agent / planning files
+.agents/
+.claude/
+brandforge-prd/
+skills-lock.json
+
+# ADK local state
+brandforge/.adk/
+
+# Docker
+*.tar
+
+# Logs (keep LOG.md but ignore runtime logs)
+*.log
