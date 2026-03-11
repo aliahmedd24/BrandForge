@@ -135,9 +135,18 @@ brandforge/
 
 ## 7. ADK-Specific Rules
 
-**For all Google ADK coding conventions, patterns, and best practices, reference the `.agents\adk-skill` installed in this project.**
+**For all Google ADK coding conventions, patterns, and best practices, reference the `.agents/skills/adk-skill` installed in this project.**
 
 The skill covers agent types, tool design, callbacks, state management, MCP integration, A2A protocol (`RemoteA2aAgent` / `to_a2a()`), multi-agent orchestration, testing, evaluation, and deployment. Read the relevant skill reference file before writing any agent or tool code.
+
+---
+
+## 7a. GCP-Specific Rules
+
+**At the start of every session, read `.agents/skills/gcp/SKILL.md` in full.**
+
+This skill covers `gcloud` CLI usage, Cloud Run deployments, Cloud Storage, Firestore, Secret Manager, Pub/Sub, IAM, and other GCP services used in this project. Always consult it before running any `gcloud` command, writing deployment config, or interacting with any GCP service.
+
 ---
 
 

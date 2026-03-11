@@ -97,6 +97,9 @@ async def transcribe_voice_brief(
     Returns:
         The transcription text. Empty string on failure or timeout.
     """
+    # Always use the real campaign_id from session state.
+    real_campaign_id = tool_context.state.get("campaign_id", campaign_id)
+
     try:
         blob_path = _gcs_path_from_url(voice_brief_url)
         mime_type = _mime_from_url(voice_brief_url)
@@ -105,7 +108,7 @@ async def transcribe_voice_brief(
 
         logger.info(
             "Transcribing voice brief for campaign %s from %s",
-            campaign_id, voice_brief_url,
+            real_campaign_id, voice_brief_url,
         )
         audio_bytes = await asyncio.to_thread(download_blob, blob_path)
 
@@ -170,10 +173,13 @@ async def analyze_brand_assets(
         "recommended_direction": "No visual assets were analyzed.",
     }
 
+    # Always use the real campaign_id from session state.
+    real_campaign_id = tool_context.state.get("campaign_id", campaign_id)
+
     try:
         logger.info(
             "Analyzing %d brand assets for campaign %s",
-            len(asset_urls), campaign_id,
+            len(asset_urls), real_campaign_id,
         )
 
         parts: list[types.Part | str] = []
@@ -299,6 +305,9 @@ async def generate_brand_dna(
     Returns:
         A dict representation of the validated BrandDNA model.
     """
+    # Always use the real campaign_id from session state — the LLM may hallucinate a slug.
+    real_campaign_id = tool_context.state.get("campaign_id", campaign_id)
+
     try:
         transcription = tool_context.state.get("transcription", "")
         visual_analysis = tool_context.state.get("visual_analysis", None)
@@ -316,7 +325,7 @@ async def generate_brand_dna(
             visual_analysis=visual_str,
         )
 
-        logger.info("Generating Brand DNA for campaign %s", campaign_id)
+        logger.info("Generating Brand DNA for campaign %s", real_campaign_id)
         client = _get_genai_client()
 
         response = await asyncio.to_thread(
@@ -330,10 +339,40 @@ async def generate_brand_dna(
         )
 
         raw = json.loads(response.text)
+
+        # Inject/fix fields the LLM often omits or gets wrong before validation.
+        raw["campaign_id"] = real_campaign_id
+        raw.setdefault("typography", {
+            "heading_font": "Inter Display",
+            "body_font": "Inter",
+            "font_personality": "Clean and modern",
+        })
+        raw.setdefault("primary_persona", {
+            "name": target_audience or "General audience",
+            "age_range": "25-45",
+            "values": ["quality"],
+            "pain_points": ["Finding the right product"],
+            "content_habits": ["Social media browsing"],
+        })
+        raw.setdefault("visual_direction", f"Modern visual style reflecting {brand_name} brand identity.")
+        # Ensure messaging_pillars items each have an 'avoid' list
+        for pillar in raw.get("messaging_pillars", []):
+            if isinstance(pillar, dict):
+                pillar.setdefault("avoid", ["Generic claims"])
+        # Convert platform_strategy from list to dict if LLM returns a list
+        ps = raw.get("platform_strategy")
+        if isinstance(ps, list):
+            raw["platform_strategy"] = {
+                item.get("platform_name", item.get("platform", f"platform_{i}")): item.get("strategy", item.get("content_approach", str(item)))
+                for i, item in enumerate(ps)
+                if isinstance(item, dict)
+            }
+        elif not isinstance(ps, dict):
+            platform_list = [p.strip() for p in platforms.split(",") if p.strip()]
+            raw["platform_strategy"] = {p: "Tailored content" for p in platform_list}
+
         brand_dna = BrandDNA.model_validate(raw)
 
-        # Override fields the LLM cannot know
-        brand_dna.campaign_id = campaign_id
         brand_dna.source_brief_summary = (
             f"Brand: {brand_name}. Product: {product_description}. "
             f"Goal: {campaign_goal}."
@@ -341,16 +380,16 @@ async def generate_brand_dna(
 
         result = brand_dna.model_dump(mode="json")
         tool_context.state["brand_dna"] = result
-        logger.info("Brand DNA generated for campaign %s", campaign_id)
+        logger.info("Brand DNA generated for campaign %s", real_campaign_id)
         return result
 
     except Exception as exc:
         logger.error(
             "Gemini Brand DNA generation failed for campaign %s: %s. Using fallback.",
-            campaign_id, exc,
+            real_campaign_id, exc,
         )
         fallback = _build_fallback_dna(
-            campaign_id, brand_name, product_description,
+            real_campaign_id, brand_name, product_description,
             target_audience, campaign_goal, tone_keywords, platforms,
         )
         result = fallback.model_dump(mode="json")
@@ -377,6 +416,9 @@ async def store_brand_dna(
     Returns:
         The brand_dna document ID string.
     """
+    # Always use the real campaign_id from session state.
+    real_campaign_id = tool_context.state.get("campaign_id", campaign_id)
+
     try:
         brand_dna_dict = tool_context.state.get("brand_dna")
         if not brand_dna_dict:
@@ -384,12 +426,15 @@ async def store_brand_dna(
 
         brand_dna = BrandDNA.model_validate(brand_dna_dict)
 
+        # Ensure brand_dna uses the real campaign_id
+        brand_dna.campaign_id = real_campaign_id
+
         # Version incrementing
         try:
             existing = await query_documents(
                 BRAND_DNA_COLLECTION,
                 field="campaign_id",
-                value=campaign_id,
+                value=real_campaign_id,
                 order_by="version",
                 descending=True,
                 limit=1,
@@ -398,12 +443,12 @@ async def store_brand_dna(
                 brand_dna.version = existing[0]["version"] + 1
                 logger.info(
                     "Incrementing BrandDNA version to %d for campaign %s",
-                    brand_dna.version, campaign_id,
+                    brand_dna.version, real_campaign_id,
                 )
         except Exception as query_exc:
             logger.warning(
                 "Could not query existing BrandDNA versions for campaign %s: %s. Defaulting to v1.",
-                campaign_id, query_exc,
+                real_campaign_id, query_exc,
             )
 
         doc_data = brand_dna.model_dump(mode="json")
@@ -412,7 +457,7 @@ async def store_brand_dna(
         await save_document(BRAND_DNA_COLLECTION, brand_dna.id, doc_data)
 
         # Save to GCS
-        gcs_path = f"campaigns/{campaign_id}/brand_dna/brand_kit.json"
+        gcs_path = f"campaigns/{real_campaign_id}/brand_dna/brand_kit.json"
         json_bytes = brand_dna.model_dump_json(indent=2).encode("utf-8")
         await asyncio.to_thread(
             upload_blob,
@@ -424,7 +469,7 @@ async def store_brand_dna(
         # Update Campaign document
         await update_document(
             CAMPAIGNS_COLLECTION,
-            campaign_id,
+            real_campaign_id,
             {"brand_dna_id": brand_dna.id},
         )
 
@@ -434,13 +479,13 @@ async def store_brand_dna(
 
         logger.info(
             "Brand DNA v%d stored (id=%s) for campaign %s",
-            brand_dna.version, brand_dna.id, campaign_id,
+            brand_dna.version, brand_dna.id, real_campaign_id,
         )
         return brand_dna.id
 
     except Exception as exc:
         logger.error(
             "Failed to store Brand DNA for campaign %s: %s",
-            campaign_id, exc,
+            real_campaign_id, exc,
         )
         raise

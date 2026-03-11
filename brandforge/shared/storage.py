@@ -39,6 +39,7 @@ def upload_blob(
     destination_path: str,
     content_type: str = "application/octet-stream",
     bucket_name: Optional[str] = None,
+    metadata: Optional[dict[str, str]] = None,
 ) -> str:
     """Upload bytes to GCS and return the gs:// URI.
 
@@ -47,6 +48,7 @@ def upload_blob(
         destination_path: The object path within the bucket (e.g. "campaigns/abc/image.png").
         content_type: The MIME type of the object.
         bucket_name: Override the default bucket name.
+        metadata: Optional custom metadata dict (e.g. campaign_id, agent_name).
 
     Returns:
         The gs:// URI of the uploaded object.
@@ -55,6 +57,8 @@ def upload_blob(
         client = get_storage_client()
         bucket = client.bucket(bucket_name or settings.gcs_bucket)
         blob = bucket.blob(destination_path)
+        if metadata:
+            blob.metadata = metadata
         blob.upload_from_string(source_data, content_type=content_type)
         uri = f"gs://{bucket.name}/{destination_path}"
         logger.info("Uploaded blob to %s", uri)

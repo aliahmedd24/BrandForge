@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users (including anonymous) to read all campaign data
+    match /campaigns/{campaignId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Backend only
+
+      match /agent_runs/{runId} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+    }
+
+    match /brand_dna/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /generated_images/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /generated_videos/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /qa_results/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /qa_summaries/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /asset_bundles/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}
