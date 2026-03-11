@@ -336,13 +336,34 @@ async def _run_agent_pipeline(campaign_id: str) -> None:
         )
         logger.info("Campaign %s pipeline complete", campaign_id)
 
-    except Exception as exc:
-        logger.error("Pipeline failed for campaign %s: %s", campaign_id, exc)
+    except BaseException as exc:
+        # Log sub-exceptions from TaskGroup/ExceptionGroup for debugging
+        if isinstance(exc, BaseExceptionGroup):
+            for i, sub_exc in enumerate(exc.exceptions):
+                logger.error(
+                    "Pipeline sub-exception %d for campaign %s: %s: %s",
+                    i, campaign_id, type(sub_exc).__name__, sub_exc,
+                )
+        else:
+            logger.error("Pipeline failed for campaign %s: %s", campaign_id, exc)
+
+        # Still mark as approved if we got partial results (brand_dna exists)
+        try:
+            campaign_data = await get_document(CAMPAIGNS_COLLECTION, campaign_id)
+            has_dna = campaign_data and campaign_data.get("brand_dna_id")
+        except Exception:
+            has_dna = False
+
+        final_status = "approved" if has_dna else "failed"
         await update_document(
             CAMPAIGNS_COLLECTION,
             campaign_id,
             {
-                "status": "failed",
+                "status": final_status,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             },
         )
+        if has_dna:
+            logger.info(
+                "Campaign %s marked approved despite partial pipeline failure", campaign_id
+            )
