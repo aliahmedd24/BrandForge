@@ -11,6 +11,22 @@ export async function createCampaign(brief) {
   return res.json();
 }
 
+export async function createDemoCampaign() {
+  const res = await fetch(`${API_BASE}/campaigns/demo`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) throw new Error(`Failed to create demo campaign: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchInfraStatus() {
+  const res = await fetch(`${API_BASE}/infra/status`);
+  if (!res.ok) throw new Error(`Failed to fetch infra status: ${res.statusText}`);
+  return res.json();
+}
+
 export async function getCampaignStatus(campaignId) {
   const res = await fetch(`${API_BASE}/campaigns/${campaignId}`);
   if (!res.ok) throw new Error(`Failed to get campaign: ${res.statusText}`);

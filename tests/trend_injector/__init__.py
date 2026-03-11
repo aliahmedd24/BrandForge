@@ -1,0 +1,1 @@
+"""Trend Injector agent tests."""

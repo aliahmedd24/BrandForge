@@ -389,3 +389,274 @@ class AssetBundle(BaseModel):
     posting_schedule_url: str  # JSON posting calendar
 
     created_at: datetime = Field(default_factory=_utcnow)
+
+
+# ── Distribution Pipeline Models (Phase 5) ────────────────────────────
+
+
+class PostingWindow(BaseModel):
+    """An optimal posting time window for a platform."""
+
+    day_of_week: str  # "monday", "tuesday", etc.
+    hour_utc: int  # 0–23
+    rationale: str  # Why this time is optimal
+    expected_reach_multiplier: float  # vs. average (e.g. 1.4 = 40% better)
+
+
+class PostableAsset(BaseModel):
+    """An asset ready for posting to a platform."""
+
+    asset_id: str
+    asset_type: str  # "image" | "video"
+    platform: Platform
+    gcs_url: str  # Optimized URL from Format Optimizer
+    copy: PlatformCopy  # Caption, hashtags, headline
+
+
+class PostScheduleItem(BaseModel):
+    """A single scheduled post in the posting calendar."""
+
+    id: str = Field(default_factory=_uuid)
+    campaign_id: str
+    asset: PostableAsset
+    scheduled_at: datetime  # UTC
+    platform: Platform
+    status: str = "scheduled"  # "scheduled" | "posted" | "failed" | "cancelled"
+    post_url: Optional[str] = None
+    cloud_scheduler_job: Optional[str] = None
+    error_message: Optional[str] = None
+
+
+class PostingCalendar(BaseModel):
+    """A complete posting schedule for a campaign."""
+
+    id: str = Field(default_factory=_uuid)
+    campaign_id: str
+    items: list[PostScheduleItem]
+    total_posts: int
+    platforms: list[Platform]
+    start_date: datetime
+    end_date: datetime
+    ics_gcs_url: Optional[str] = None
+
+
+class AuthStatus(BaseModel):
+    """OAuth authentication status for a social platform."""
+
+    platform: Platform
+    is_valid: bool
+    expires_at: Optional[datetime] = None
+    needs_refresh: bool
+    error_message: Optional[str] = None
+
+
+class PostResult(BaseModel):
+    """Result of posting an asset to a social platform."""
+
+    platform: Platform
+    success: bool
+    post_url: Optional[str] = None
+    platform_post_id: Optional[str] = None
+    posted_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    retry_attempted: bool = False
+
+
+# ── Analytics & A2A Models (Phase 6) ──────────────────────────────────
+
+
+class PostMetrics(BaseModel):
+    """Raw engagement metrics for a single published post."""
+
+    post_schedule_item_id: str
+    platform: Platform
+    asset_id: str
+    asset_type: str  # "image" | "video"
+
+    # Reach
+    impressions: int
+    reach: int
+
+    # Engagement
+    likes: int
+    comments: int
+    shares: int
+    saves: int = 0  # Instagram only
+
+    # Video-specific
+    video_views: Optional[int] = None
+    video_completion_rate: Optional[float] = None  # 0.0–1.0
+
+    # Derived
+    engagement_rate: float  # (likes+comments+shares) / impressions * 100
+    click_through_rate: Optional[float] = None
+
+    # Meta
+    fetched_at: datetime = Field(default_factory=_utcnow)
+    hours_since_post: int  # 24, 72, or 168 (7d)
+
+
+class PerformanceRanking(BaseModel):
+    """Relative performance analysis across all posts in a campaign."""
+
+    best_asset_id: str
+    best_asset_type: str
+    best_platform: Platform
+    best_posting_hour_utc: int
+
+    video_avg_engagement_rate: float
+    image_avg_engagement_rate: float
+    video_vs_image_multiplier: float  # e.g. 3.2
+
+    platform_rankings: list[dict]  # Ordered by engagement rate
+    worst_asset_id: str
+
+
+class CreativeRecommendation(BaseModel):
+    """Structured recommendation for next campaign iteration."""
+
+    dimension: str  # "content_type" | "posting_time" | "platform" | "visual_style" | "copy_length"
+    finding: str  # What the data showed
+    recommendation: str  # What to do next time
+    confidence: float  # 0.0–1.0 based on data volume
+    supporting_metrics: dict  # The specific numbers
+
+
+class AnalyticsInsight(BaseModel):
+    """The A2A message payload sent from Analytics Agent to Orchestrator."""
+
+    id: str = Field(default_factory=_uuid)
+    campaign_id: str
+    brand_id: Optional[str] = None  # For brand memory (Phase 7)
+
+    all_metrics: list[PostMetrics]
+    performance_ranking: PerformanceRanking
+
+    # Natural language
+    insight_report: str  # 3-5 paragraph summary
+
+    # Structured recommendations for agent consumption
+    creative_recommendations: list[CreativeRecommendation]
+
+    # Summary flags for Brand Memory
+    bias_toward_video: bool
+    top_platform: Platform
+    optimal_posting_hour_utc: int
+
+    analysis_timestamp: datetime = Field(default_factory=_utcnow)
+    data_completeness: float  # 0.0–1.0 (how many platforms had data)
+
+
+# ── Advanced Intelligence Models (Phase 7) ────────────────────────────
+
+
+class TrendSignal(BaseModel):
+    """A single real-time cultural or platform trend."""
+
+    title: str  # e.g. "De-influencing aesthetic on TikTok"
+    platform: Optional[Platform] = None  # Null if cross-platform
+    category: str  # "format" | "aesthetic" | "hook" | "cultural"
+    description: str
+    why_relevant: str  # Why this matters for this brand
+    source_url: str  # Grounding evidence
+    recency: str  # e.g. "trending this week"
+    confidence: float  # 0.0–1.0 (based on search result quality)
+
+
+class TrendBrief(BaseModel):
+    """Compiled trend research injected into Brand Strategist context."""
+
+    id: str = Field(default_factory=_uuid)
+    campaign_id: str
+    signals: list[TrendSignal]  # Max 8 signals
+    platform_format_recommendations: dict[str, str]  # Platform → recommended format
+    hook_patterns: list[str]  # 3-5 proven opening hooks for this audience
+    cultural_context: str  # Paragraph on current cultural mood
+    search_queries_used: list[str]  # Transparency / grounding proof
+    generated_at: datetime = Field(default_factory=_utcnow)
+
+
+class CompetitorProfile(BaseModel):
+    """Structured analysis of a single competitor brand."""
+
+    competitor_url: Optional[str] = None
+    screenshot_gcs_url: Optional[str] = None
+    brand_name: str  # Extracted from page or filename
+
+    # Visual analysis
+    dominant_colors: list[str]  # Hex values
+    visual_style: str  # e.g. "clean minimalism", "maximalist luxury"
+    photography_style: str  # e.g. "lifestyle", "product-only", "UGC"
+
+    # Messaging analysis
+    tone: str
+    key_messages: list[str]
+    target_audience_guess: str
+
+    # Positioning
+    mainstream_niche_score: float  # 0=mainstream, 1=niche
+    premium_accessible_score: float  # 0=accessible, 1=premium
+
+    # Differentiation
+    weakness: str  # Their brand's weakness
+    differentiation_opportunity: str  # How user's brand should position away
+
+
+class CompetitorMap(BaseModel):
+    """Competitive analysis map with positioning chart."""
+
+    id: str = Field(default_factory=_uuid)
+    campaign_id: str
+    competitors: list[CompetitorProfile]
+    user_brand_positioning: dict  # Where BrandForge places the user's brand
+    differentiation_strategy: str  # Paragraph on how to stand out
+    positioning_map_svg: str  # SVG string of 2x2 quadrant chart
+
+
+class CampaignPerformanceSummary(BaseModel):
+    """Appended to brand memory after each campaign analytics run."""
+
+    campaign_id: str
+    completed_at: datetime = Field(default_factory=_utcnow)
+    brand_coherence_score: float
+    top_performing_asset_type: str  # "video" | "image"
+    top_performing_platform: Platform
+    top_performing_tone: str
+    winning_color_palette: ColorPalette
+    audience_response_patterns: list[str]  # e.g. "responds to vulnerability"
+    recommendations_applied: list[str]  # What was changed based on prior insights
+
+
+class BrandMemory(BaseModel):
+    """Persistent brand intelligence stored at /brands/{brand_id}."""
+
+    id: str = Field(default_factory=_uuid)
+    brand_name: str
+    created_at: datetime = Field(default_factory=_utcnow)
+
+    # Accumulated intelligence
+    campaign_history: list[CampaignPerformanceSummary] = []  # Append-only
+    campaign_count: int = 0
+
+    # Evolved brand state
+    current_brand_dna_id: Optional[str] = None  # Most recent approved Brand DNA
+    evolved_color_palette: Optional[ColorPalette] = None
+    content_type_bias: dict = Field(default_factory=lambda: {"video": 0.5, "image": 0.5})
+    platform_priority: list[Platform] = []  # Ordered by performance
+    avg_brand_coherence_score: float = 0.0  # Rolling average
+
+    # Recommendations for next campaign
+    next_campaign_recommendations: list[CreativeRecommendation] = []
+
+    updated_at: datetime = Field(default_factory=_utcnow)
+
+
+class VoiceFeedbackResult(BaseModel):
+    """Result of processing user voice input by Sage."""
+
+    transcription: str
+    intent: str  # "modification" | "question" | "confirmation"
+    target_agent: Optional[str] = None  # Which agent receives the modification
+    instruction: Optional[str] = None  # The modification instruction
+    sage_response_text: str  # Sage's reply
+    sage_response_audio_url: str  # GCS URL of TTS audio

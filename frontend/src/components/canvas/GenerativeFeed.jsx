@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useCampaignStore from "../../stores/campaignStore";
 import ImageAssetCard from "../assets/ImageAssetCard";
+import VariantShowcase from "../assets/VariantShowcase";
 import VideoAssetCard from "../assets/VideoAssetCard";
 import CopyAssetCard from "../assets/CopyAssetCard";
 import MoodBoardGrid from "../assets/MoodBoardGrid";
@@ -74,6 +75,8 @@ function FeedItem({ item }) {
       return <MoodBoardGrid images={item.payload} />;
     case "image":
       return <ImageAssetCard image={item.payload} />;
+    case "variant_group":
+      return <VariantShowcase variants={item.payload.variants} specKey={item.payload.specKey} />;
     case "video":
       return <VideoAssetCard video={item.payload} />;
     case "copy":

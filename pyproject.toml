@@ -20,6 +20,12 @@ dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "python-multipart>=0.0.12",
+    "Pillow>=10.0",
+    "icalendar>=5.0",
+    "google-cloud-scheduler>=2.13.0",
+    "google-cloud-bigquery>=3.14.0",
+    "google-cloud-monitoring>=2.19.0",
+    "playwright>=1.40.0",
 ]
 
 [project.optional-dependencies]

@@ -7,12 +7,17 @@ via brandforge/__init__.py → from . import agent.
 import logging
 import sys
 
-from google.adk.agents import SequentialAgent
+from google.adk.agents import ParallelAgent, SequentialAgent
 
+from brandforge.agents.brand_memory.agent import brand_memory_agent
 from brandforge.agents.brand_strategist.agent import brand_strategist_agent
 from brandforge.agents.campaign_assembler.agent import campaign_assembler_agent
+from brandforge.agents.competitor_intel.agent import competitor_intel_agent
+from brandforge.agents.distribution_orchestrator.agent import distribution_orchestrator
 from brandforge.agents.production_orchestrator.agent import production_orchestrator
 from brandforge.agents.qa_inspector.agent import qa_inspector_agent
+from brandforge.agents.sage.agent import sage_agent
+from brandforge.agents.trend_injector.agent import trend_injector_agent
 
 # ── Structured JSON logging ─────────────────────────────────────────────
 
@@ -23,6 +28,20 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("brandforge")
+
+# ── Pre-Strategy Intelligence: Trend Injector + Competitor Intel + Brand Memory
+# These three agents run in parallel BEFORE Brand Strategist to inject
+# real-time trends, competitor analysis, and brand memory into the context.
+
+pre_strategy_intel = ParallelAgent(
+    name="pre_strategy_intel",
+    description=(
+        "Pre-strategy intelligence gathering. Runs Trend Injector, "
+        "Competitor Intelligence, and Brand Memory fetch in parallel "
+        "before Brand Strategist."
+    ),
+    sub_agents=[trend_injector_agent, competitor_intel_agent, brand_memory_agent],
+)
 
 # ── QA Orchestrator: QA Inspector → Campaign Assembler ──────────────────
 
@@ -36,18 +55,32 @@ qa_orchestrator = SequentialAgent(
 )
 
 # ── Root Agent ───────────────────────────────────────────────────────────
-# SequentialAgent guarantees all three phases run in order:
-#   1. Brand Strategist  → Brand DNA
-#   2. Production         → Scripts, images, videos, copy
-#   3. QA + Assembly      → Review & package
+# SequentialAgent guarantees all phases run in order:
+#   1. Pre-Strategy Intel → Trends, competitors, brand memory (parallel)
+#   2. Brand Strategist   → Brand DNA (informed by trends/competitors/memory)
+#   3. Production         → Scripts, images, videos, copy
+#   4. QA + Assembly      → Review & package
+#   5. Distribution       → Format, schedule, publish
+#   6. Sage               → Campaign debrief narration
 
 root_agent = SequentialAgent(
     name="brandforge_root",
-    description="BrandForge root pipeline. Runs brand strategy, creative production, QA, and assembly in sequence.",
-    sub_agents=[brand_strategist_agent, production_orchestrator, qa_orchestrator],
+    description=(
+        "BrandForge root pipeline. Runs pre-strategy intelligence, brand strategy, "
+        "creative production, QA/assembly, distribution, and Sage narration in sequence."
+    ),
+    sub_agents=[
+        pre_strategy_intel,
+        brand_strategist_agent,
+        production_orchestrator,
+        qa_orchestrator,
+        distribution_orchestrator,
+        sage_agent,
+    ],
 )
 
 logger.info(
     "BrandForge root agent initialized (sequential pipeline, "
-    "sub_agents=[brand_strategist, production_orchestrator, qa_orchestrator])"
+    "sub_agents=[pre_strategy_intel, brand_strategist, production_orchestrator, "
+    "qa_orchestrator, distribution_orchestrator, sage])"
 )

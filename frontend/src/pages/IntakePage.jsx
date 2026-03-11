@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import BriefForm from "../components/intake/BriefForm";
+import DemoModeButton from "../components/intake/DemoModeButton";
 import useCampaignStore from "../stores/campaignStore";
 import { ensureAuth } from "../lib/firestore";
 import { uploadAsset, uploadVoiceBrief } from "../lib/storage";
@@ -12,6 +13,28 @@ export default function IntakePage() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const initCampaign = useCampaignStore((s) => s.initCampaign);
+  const initDemoCampaign = useCampaignStore((s) => s.initDemoCampaign);
+  const [searchParams] = useSearchParams();
+
+  const handleDemo = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await ensureAuth();
+      const campaignId = await initDemoCampaign();
+      navigate(`/canvas/${campaignId}`);
+    } catch (e) {
+      setError(e.message || "Failed to launch demo");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (searchParams.get("demo") === "true") {
+      handleDemo();
+    }
+  }, []);
 
   const handleSubmit = async (formData) => {
     setLoading(true);
@@ -93,6 +116,13 @@ export default function IntakePage() {
             {error}
           </div>
         )}
+
+        <div className="max-w-2xl mx-auto mb-8">
+          <DemoModeButton onClick={handleDemo} loading={loading} />
+          <div className="text-center my-6 text-brand-muted text-sm">
+            — or describe your own brand below —
+          </div>
+        </div>
 
         <BriefForm onSubmit={handleSubmit} loading={loading} />
       </main>

@@ -5,6 +5,7 @@ import useCampaignStore from "../stores/campaignStore";
 import AgentPipeline from "../components/canvas/AgentPipeline";
 import GenerativeFeed from "../components/canvas/GenerativeFeed";
 import BrandDNAViewer from "../components/canvas/BrandDNAViewer";
+import InfraStatusPanel from "../components/canvas/InfraStatusPanel";
 import BrandCoherenceScore from "../components/canvas/BrandCoherenceScore";
 import CampaignComplete from "../components/canvas/CampaignComplete";
 
@@ -46,6 +47,7 @@ export default function CanvasPage() {
 
         {/* Right: Brand DNA Viewer */}
         <div className="w-64 flex-shrink-0 border-l border-brand-border overflow-y-auto hidden lg:block">
+          <InfraStatusPanel />
           <BrandDNAViewer />
         </div>
       </div>

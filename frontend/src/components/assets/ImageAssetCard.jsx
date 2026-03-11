@@ -3,6 +3,17 @@ import { Maximize2 } from "lucide-react";
 import { getSignedUrl } from "../../lib/storage";
 import useCampaignStore from "../../stores/campaignStore";
 
+function aspectClass(ratio) {
+  switch (ratio) {
+    case "9:16":
+      return "aspect-[9/16]";
+    case "16:9":
+      return "aspect-video";
+    default:
+      return "aspect-square";
+  }
+}
+
 const imageVariants = {
   hidden: { opacity: 0, filter: "blur(12px)", scale: 1.03 },
   visible: {
@@ -13,7 +24,7 @@ const imageVariants = {
   },
 };
 
-export default function ImageAssetCard({ image }) {
+export default function ImageAssetCard({ image, variantLabel, compact }) {
   const qaResults = useCampaignStore((s) => s.qaResults);
   const setActive = useCampaignStore((s) => s.setActiveAsset);
   const qa = qaResults[image.id];
@@ -32,7 +43,7 @@ export default function ImageAssetCard({ image }) {
       <img
         src={url}
         alt={`Generated ${image.platform} ${image.spec?.use_case || "image"}`}
-        className="w-full aspect-square object-cover"
+        className={`w-full ${compact ? "aspect-[4/5]" : aspectClass(image.spec?.aspect_ratio)} object-cover`}
         loading="lazy"
       />
 

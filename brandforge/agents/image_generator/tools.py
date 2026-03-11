@@ -124,6 +124,23 @@ async def generate_campaign_images(
                 if len(prompt) > 1900:
                     prompt = prompt[:1900]
 
+                # Demo mode: sabotage variant C of first spec for QA failure demo
+                is_demo = tool_context.state.get("demo_mode", False)
+                if (
+                    is_demo
+                    and variant_num == 3
+                    and not tool_context.state.get("demo_first_image_sabotaged")
+                ):
+                    from brandforge.demo.constants import DEMO_SABOTAGE_PROMPT
+                    prompt = prompt.replace(
+                        brand_dna.visual_direction,
+                        DEMO_SABOTAGE_PROMPT,
+                    )
+                    tool_context.state["demo_first_image_sabotaged"] = True
+                    logger.info(
+                        "Demo mode: sabotaged variant C prompt for QA failure demo"
+                    )
+
                 logger.info(
                     "Generating image: %s %s variant %d for campaign %s",
                     spec.platform.value, spec.use_case, variant_num, real_campaign_id,

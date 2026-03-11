@@ -27,6 +27,12 @@ GENERATED_VIDEOS_COLLECTION = "generated_videos"
 COPY_PACKAGES_COLLECTION = "copy_packages"
 QA_RESULTS_COLLECTION = "qa_results"
 QA_SUMMARIES_COLLECTION = "qa_summaries"
+POSTING_CALENDARS_COLLECTION = "posting_calendars"
+SCHEDULE_ITEMS_COLLECTION = "schedule_items"
+ANALYTICS_INSIGHTS_COLLECTION = "analytics_insights"
+BRAND_MEMORY_COLLECTION = "brands"
+TREND_BRIEFS_COLLECTION = "trend_briefs"
+COMPETITOR_MAPS_COLLECTION = "competitor_maps"
 
 # ── Client singleton ────────────────────────────────────────────────────
 

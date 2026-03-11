@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { createCampaign } from "../lib/api";
+import { createCampaign, createDemoCampaign } from "../lib/api";
 import {
   subscribeToCampaign,
   subscribeToBrandDNA,
@@ -43,6 +43,8 @@ const useCampaignStore = create((set, get) => ({
   activeAssetId: null,
   feedItems: [],
   assetBundle: null,
+  demoMode: false,
+  pinnedVariants: {},
 
   _unsubs: [],
 
@@ -55,6 +57,19 @@ const useCampaignStore = create((set, get) => ({
         { ...item, id: item.id || crypto.randomUUID(), timestamp: Date.now() },
       ],
     })),
+
+  setPinnedVariant: (key, imageId) =>
+    set((s) => ({
+      pinnedVariants: { ...s.pinnedVariants, [key]: imageId },
+    })),
+
+  initDemoCampaign: async () => {
+    set({ status: "creating", demoMode: true });
+    const data = await createDemoCampaign();
+    set({ campaignId: data.campaign_id, status: "running" });
+    get().subscribeToCampaign(data.campaign_id);
+    return data.campaign_id;
+  },
 
   initCampaign: async (brief) => {
     set({ status: "creating" });
@@ -104,15 +119,48 @@ const useCampaignStore = create((set, get) => ({
       subscribeToImages(id, (images) => {
         const prev = get().generatedImages;
         set({ generatedImages: images });
-        const newImages = images.filter(
-          (img) => !prev.find((p) => p.id === img.id),
-        );
-        newImages.forEach((img) => {
-          get().addFeedItem({
-            type: "image",
-            agentName: "image_generator",
-            payload: img,
-          });
+
+        // Group images by platform_usecase key for variant showcase
+        const groups = {};
+        images.forEach((img) => {
+          const key = `${img.platform}_${img.spec?.use_case || "image"}`;
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(img);
+        });
+
+        const prevGroups = {};
+        prev.forEach((img) => {
+          const key = `${img.platform}_${img.spec?.use_case || "image"}`;
+          if (!prevGroups[key]) prevGroups[key] = [];
+          prevGroups[key].push(img);
+        });
+
+        // Emit variant_group when all 3 variants arrive, individual images otherwise
+        Object.entries(groups).forEach(([key, variants]) => {
+          const prevCount = (prevGroups[key] || []).length;
+          if (variants.length >= 3 && prevCount < 3) {
+            // All 3 variants just arrived — emit as a group
+            const sorted = [...variants].sort(
+              (a, b) => (a.variant_number || 0) - (b.variant_number || 0),
+            );
+            get().addFeedItem({
+              type: "variant_group",
+              agentName: "image_generator",
+              payload: { specKey: key, variants: sorted.slice(0, 3) },
+            });
+          } else if (variants.length < 3) {
+            // Not all variants yet — emit individually
+            const newImages = variants.filter(
+              (img) => !prev.find((p) => p.id === img.id),
+            );
+            newImages.forEach((img) => {
+              get().addFeedItem({
+                type: "image",
+                agentName: "image_generator",
+                payload: img,
+              });
+            });
+          }
         });
       }),
     );

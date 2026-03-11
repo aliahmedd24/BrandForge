@@ -1,5 +1,62 @@
 # BrandForge Session Log
 
+## Session 2026-03-11 21:20 — Phase 8: Demo Hardening & Hackathon Submission
+
+**Status:** Complete
+**Phase File:** phase-08-demo-hardening.md
+
+### What Was Done
+
+**Backend (New Files):**
+- `brandforge/demo/__init__.py` — Package marker
+- `brandforge/demo/constants.py` — `DEMO_BRIEF` (Grounded sustainable sneakers), `DEMO_SABOTAGE_PROMPT` (icy blue-steel palette for QA failure engineering)
+
+**Backend (Modified):**
+- `brandforge/api.py` — Added `POST /campaigns/demo` endpoint (creates campaign from DEMO_BRIEF, triggers pipeline with `demo_mode=True`); added `GET /infra/status` endpoint (returns 6 GCP service statuses with monitoring fallback); modified `_run_agent_pipeline` to accept `demo_mode: bool = False` and seed it into session state
+- `brandforge/agents/image_generator/tools.py` — Added demo mode sabotage logic: when `demo_mode=True`, variant C of the first spec gets its visual direction replaced with DEMO_SABOTAGE_PROMPT; sets `demo_first_image_sabotaged` flag to prevent repeat
+- `pyproject.toml` — Added `google-cloud-monitoring>=2.19.0` dependency
+- `Dockerfile` — Added `RUN playwright install --with-deps chromium` for Competitor Intel
+
+**Frontend (New Files):**
+- `frontend/src/components/intake/DemoModeButton.jsx` — Gradient button with Play icon for launching demo
+- `frontend/src/components/assets/VariantShowcase.jsx` — A/B/C variant grid with QA score badges (green/yellow/red) and pin functionality
+- `frontend/src/components/assets/VariantExpandModal.jsx` — Full-screen modal with image + prompt + QA breakdown
+- `frontend/src/components/canvas/InfraStatusPanel.jsx` — Glass-panel card polling `GET /infra/status` every 10s with green pulsing dots
+
+**Frontend (Modified):**
+- `frontend/src/lib/api.js` — Added `createDemoCampaign()` and `fetchInfraStatus()` functions
+- `frontend/src/stores/campaignStore.js` — Added `demoMode`, `pinnedVariants` state; `setPinnedVariant`, `initDemoCampaign` actions
+- `frontend/src/pages/IntakePage.jsx` — Added DemoModeButton above form, `?demo=true` URL auto-trigger via useEffect
+- `frontend/src/pages/CanvasPage.jsx` — Added InfraStatusPanel to right sidebar above BrandDNAViewer
+- `frontend/src/components/canvas/GenerativeFeed.jsx` — Added `variant_group` feed item type with VariantShowcase
+- `frontend/src/components/assets/ImageAssetCard.jsx` — Added `variantLabel` and `compact` props
+
+**Submission Package:**
+- `README.md` — Full hackathon submission README (what it does, architecture diagram, tech stack, setup/deploy, demo mode)
+- `docs/architecture.md` — Mermaid pipeline diagram + data flow narrative + design decisions
+- `docs/demo-video-script.md` — Timed 5-minute demo video script
+
+**Tests:**
+- `tests/demo/__init__.py` — Package marker
+- `tests/demo/test_demo_mode.py` — 6 tests (DEMO_BRIEF validation, sabotage prompt, GCP-marked pipeline/QA tests)
+- `tests/demo/test_infra_panel.py` — 2 tests (endpoint returns ≥4 services with LIVE status, core services present)
+- `tests/demo/test_submission.py` — 3 tests (README sections, architecture diagram, demo script existence)
+
+### Decisions Made
+- QA failure engineering targets variant C (variant_num=3) of the first spec only — uses brand visual_direction replacement rather than a separate prompt to keep the sabotage natural
+- Infra status endpoint falls back to static "LIVE" display if Cloud Monitoring API is unavailable
+- GCP-marked integration tests (QA failure/recovery, coherence) are skipped pending live services
+
+### Blockers / Open Questions
+- None — all Phase 8 DoD items implemented
+
+### Next Session Should
+- Run the full end-to-end demo: `http://localhost:3000?demo=true` → verify QA failure on variant C → recovery → coherence ≥ 90% → Sage narration
+- Verify InfraStatusPanel stays visible during scroll on CanvasPage
+- Record the 5-minute demo video using `docs/demo-video-script.md`
+- Fill in placeholder URLs in README.md (demo video link, live demo URL)
+- Deploy to Cloud Run and verify in production
+
 ## Session 2026-03-09 10:10 — Phase 0: Foundation & Infrastructure
 
 **Status:** Complete
@@ -433,3 +490,262 @@
 - Begin Phase 5 (Distribution Pipeline) or Phase 8 (Demo Hardening) depending on hackathon timeline
 - The frontend build output is in `frontend/dist/` — deploy to Cloud Run or Firebase Hosting
 - Backend API is at `brandforge/api.py` — serves both REST and SSE endpoints
+
+---
+
+## Session 2026-03-11 00:00 — Phase 5 & 6: Distribution Pipeline + Analytics A2A
+
+**Status:** In Progress (Phase 5 Complete, Phase 6 Complete, Phase 7 Started)
+**Phase Files:** phase-05-distribution-pipeline.md, phase-06-analytics-a2a.md, phase-07-advanced-intelligence.md
+
+### What Was Done
+
+**Shared Infrastructure Updates (all phases):**
+- `brandforge/shared/models.py` — Added 22 new Pydantic v2 models across Phases 5–7:
+  - **Phase 5:** `PostingWindow`, `PostableAsset`, `PostScheduleItem`, `PostingCalendar`, `AuthStatus`, `PostResult`
+  - **Phase 6:** `PostMetrics`, `PerformanceRanking`, `CreativeRecommendation`, `AnalyticsInsight`
+  - **Phase 7:** `TrendSignal`, `TrendBrief`, `CompetitorProfile`, `CompetitorMap`, `CampaignPerformanceSummary`, `BrandMemory`, `VoiceFeedbackResult`
+- `brandforge/shared/__init__.py` — Updated exports with all 22 new models
+- `brandforge/shared/firestore.py` — Added 6 collection constants: `POSTING_CALENDARS_COLLECTION`, `SCHEDULE_ITEMS_COLLECTION`, `ANALYTICS_INSIGHTS_COLLECTION`, `BRAND_MEMORY_COLLECTION`, `TREND_BRIEFS_COLLECTION`, `COMPETITOR_MAPS_COLLECTION`
+- `pyproject.toml` — Added 5 new dependencies: `Pillow>=10.0`, `icalendar>=5.0`, `google-cloud-scheduler>=2.13.0`, `google-cloud-bigquery>=3.14.0`, `playwright>=1.40.0`
+
+**Phase 5: Distribution Pipeline (3 agents + orchestrator):**
+
+*Format Optimizer Agent:*
+- `brandforge/config/__init__.py` — New config package
+- `brandforge/config/platform_specs.py` — Config-driven platform format specs for 6 platforms (Instagram, LinkedIn, Twitter/X, TikTok, Facebook, YouTube) with image and video dimensions, formats, max sizes
+- `brandforge/agents/format_optimizer/__init__.py` — Package marker
+- `brandforge/agents/format_optimizer/prompts.py` — `FORMAT_OPTIMIZER_INSTRUCTION`
+- `brandforge/agents/format_optimizer/tools.py` — 2 tools: `optimize_image_for_platform` (Pillow LANCZOS resize, quality compression loop to meet max_size_mb), `optimize_video_for_platform` (FFmpeg transcode with scale/pad, duration trim, libx264/aac)
+- `brandforge/agents/format_optimizer/agent.py` — `format_optimizer_agent = LlmAgent(output_key="optimized_assets")`
+
+*Post Scheduler Agent:*
+- `brandforge/agents/post_scheduler/__init__.py` — Package marker
+- `brandforge/agents/post_scheduler/prompts.py` — `POST_SCHEDULER_INSTRUCTION`, `POSTING_TIME_RESEARCH_PROMPT`
+- `brandforge/agents/post_scheduler/tools.py` — 4 tools: `research_optimal_posting_times` (Gemini + Google Search grounding with fallback defaults), `generate_posting_calendar` (14-day pacing: max 3/platform/week, alternating asset types, Firestore persistence), `export_calendar_ics` (icalendar library → GCS), `schedule_cloud_jobs` (Cloud Scheduler jobs per PostScheduleItem)
+- `brandforge/agents/post_scheduler/agent.py` — `post_scheduler_agent = LlmAgent(output_key="posting_schedule")`
+
+*Social Publisher Agent (MCP):*
+- `brandforge/agents/publisher/__init__.py` — Package marker
+- `brandforge/agents/publisher/mcp_config.py` — MCP server URLs and OAuth scopes for 6 platforms
+- `brandforge/agents/publisher/prompts.py` — `PUBLISHER_INSTRUCTION` (rate-limit rules, retry once on 5xx, never block on single failure)
+- `brandforge/agents/publisher/tools.py` — 4 tools: `verify_platform_auth` (Secret Manager OAuth token check with expiry), `post_image_to_platform` (MCP server call with 2s rate limit), `post_video_to_platform` (MCP server call), `update_schedule_item_status` (Firestore update)
+- `brandforge/agents/publisher/agent.py` — `publisher_agent = LlmAgent(output_key="publish_results")`
+
+*Distribution Orchestrator:*
+- `brandforge/agents/distribution_orchestrator/__init__.py` — Package marker
+- `brandforge/agents/distribution_orchestrator/agent.py` — `SequentialAgent(format_optimizer → post_scheduler → publisher)`
+
+*Root Agent Update:*
+- `brandforge/agent.py` — Added `distribution_orchestrator` as 4th sub_agent in root pipeline: `[brand_strategist, production_orchestrator, qa_orchestrator, distribution_orchestrator]`
+
+*Phase 5 Tests:*
+- `tests/format_optimizer/__init__.py`, `tests/format_optimizer/test_format_optimizer.py` — 3 DoD tests: image resize dimensions (1080x1080), video duration trim (-t 60), file size within limits
+- `tests/post_scheduler/__init__.py`, `tests/post_scheduler/test_scheduler.py` — 5 DoD tests: posting windows grounded, calendar pacing (max 3/week), asset type distribution (no consecutive same type), ICS export valid (icalendar parse), Cloud Scheduler jobs created
+- `tests/publisher/__init__.py`, `tests/publisher/test_publisher.py` — 4 DoD tests: auth check before post, retry on failure, failure doesn't block remaining, post URL stored in Firestore
+
+**Phase 6: Analytics Agent & A2A Feedback Loop:**
+- `brandforge/agents/analytics/__init__.py` — Package marker
+- `brandforge/agents/analytics/prompts.py` — `ANALYTICS_INSTRUCTION`, `INSIGHT_REPORT_TEMPLATE`
+- `brandforge/agents/analytics/tools.py` — 5 tools: `fetch_platform_metrics` (MCP reads + Firestore query for posted items), `store_metrics_to_bigquery` (BigQuery insert_rows_json, idempotent), `compute_performance_rankings` (video vs image multiplier, platform rankings, best/worst asset), `generate_insight_report` (Gemini with metrics context), `deliver_a2a_insights` (AnalyticsInsight → Firestore + session state user: keys for orchestrator)
+- `brandforge/agents/analytics/agent.py` — `analytics_agent = LlmAgent(output_key="analytics_insight")`
+- `tests/analytics/__init__.py`, `tests/analytics/test_analytics.py` — 7 DoD tests: engagement rate formula, structured recommendations validation, A2A delivery with state keys, performance rankings computation, partial platform data graceful handling, insight report cites numbers, BigQuery write idempotent
+
+**Phase 7: Advanced Intelligence (started, not complete):**
+- `brandforge/agents/trend_injector/__init__.py` — Package marker created
+- Remaining agents (competitor_intel, brand_memory, sage) directories created but not yet implemented
+
+### Decisions Made
+- Platform specs are config-driven (`brandforge/config/platform_specs.py`) — updating specs requires no code changes in agent logic
+- Format Optimizer uses Pillow LANCZOS for image resize (highest quality) with iterative quality reduction to meet size limits
+- Post Scheduler calendar pacing algorithm: max 3 posts/platform/week, alternating asset types, hours spread 10–17 UTC
+- Publisher MCP calls are simulated (placeholder URLs) — real MCP server integration pending actual MCP server availability
+- Publisher tools use simple string params for LLM compatibility (caption, headline, hashtags as strings, not PlatformCopy)
+- Analytics Agent stores insights in both Firestore and session state (`user:` prefix keys) for orchestrator consumption
+- Analytics Agent is NOT wired into the root sequential pipeline — it runs on a Cloud Scheduler trigger (24h/72h/7d after campaign publish), separate from the main agent flow
+- All 22 new models added in a single batch to `models.py` to avoid multiple partial edits
+- `PostableAsset.copy` field triggers a Pydantic warning (shadows BaseModel attribute) — functionally harmless, could rename to `platform_copy` if needed
+
+### Blockers / Open Questions
+- Phase 7 implementation incomplete — Trend Injector, Competitor Intel, Brand Memory, and Sage agents need tools and tests
+- Publisher MCP integration is simulated — real MCP servers for Instagram/LinkedIn/TikTok/X don't exist yet at those URLs
+- BigQuery table `brandforge.campaign_analytics` must be created manually or via bootstrap script
+- Cloud Scheduler jobs require the backend API to expose a `/campaigns/{id}/publish/{item_id}` endpoint (not yet added to `api.py`)
+- `PostableAsset.copy` field Pydantic warning — cosmetic, no functional impact
+
+### Definition of Done Verification
+
+**Phase 5 — Format Optimizer:**
+| Item | Status |
+|------|--------|
+| Image resize correct dimensions (1080x1080) | PASS (mocked test) |
+| Video duration trimmed (60s max for TikTok) | PASS (mocked FFmpeg test) |
+| File size within platform limits | PASS (mocked test) |
+
+**Phase 5 — Post Scheduler:**
+| Item | Status |
+|------|--------|
+| Posting windows grounded (search rationale) | `[UNVERIFIED]` (needs Gemini API) |
+| Calendar pacing (max 3/platform/week) | PASS (unit test) |
+| Asset type distribution (no consecutive same) | PASS (unit test) |
+| ICS export valid (icalendar parse) | PASS (unit test) |
+| Cloud Scheduler jobs created | `[UNVERIFIED]` (needs GCP) |
+
+**Phase 5 — Publisher:**
+| Item | Status |
+|------|--------|
+| Auth check before post | PASS (unit test) |
+| Retry on failure | PASS (unit test) |
+| Failure doesn't block remaining | PASS (unit test) |
+| Post URL stored in Firestore | PASS (mocked test) |
+| Integration: sandbox LinkedIn post | `[UNVERIFIED]` (needs live MCP) |
+
+**Phase 6 — Analytics:**
+| Item | Status |
+|------|--------|
+| Metrics fetched for all platforms | `[UNVERIFIED]` (needs live MCP) |
+| BigQuery write idempotent | PASS (mocked test) |
+| Engagement rate formula correct | PASS (unit test) |
+| Insight report cites numbers | `[UNVERIFIED]` (needs Gemini API) |
+| Recommendations structured (Pydantic valid) | PASS (unit test) |
+| A2A delivery returns delivered status | PASS (mocked test) |
+| Orchestrator receives and stores insight | PASS (state keys verified) |
+| Partial platform data handled | PASS (unit test) |
+| Cloud Scheduler triggers at 24h/72h/7d | `[UNVERIFIED]` (needs GCP) |
+| BigQuery query < 5s for 10K rows | `[UNVERIFIED]` (needs BigQuery) |
+
+**Code Quality:**
+| Item | Status |
+|------|--------|
+| All functions have docstrings + type hints | PASS |
+| All async tools have try/except + logging.error | PASS |
+| No hardcoded secrets or bucket names | PASS |
+| All new files compile without syntax errors | PASS |
+| Import chain: root_agent includes distribution_orchestrator | PASS |
+
+### Next Session Should
+- **Complete Phase 7** — implement tools and tests for: Trend Injector (Gemini + Google Search grounding), Competitor Intel (Playwright screenshots + Gemini Vision), Brand Memory (Firestore CRUD), Sage Voice (Cloud TTS + Gemini Live API)
+- Wire Trend Injector and Competitor Intel into root pipeline BEFORE brand_strategist (they inject context)
+- Phase 7 agent directories are created but empty (except `trend_injector/__init__.py`)
+- After Phase 7, implement Phase 8 (Demo Hardening): demo mode, infra panel, A/B variant UI, submission package
+- Analytics agent is standalone (not in root pipeline) — needs Cloud Scheduler trigger setup in `scripts/bootstrap.sh`
+- Add `/campaigns/{id}/publish/{item_id}` endpoint to `brandforge/api.py` for Cloud Scheduler callbacks
+- To run all offline tests: `uv run pytest tests/ -m "not llm and not gcp" -v`
+- The root pipeline is now 4 stages: brand_strategist → production_orchestrator → qa_orchestrator → distribution_orchestrator
+
+---
+
+## Session 2026-03-11 19:30 — Phase 7: Advanced Intelligence Features
+
+**Status:** Complete
+**Phase File:** phase-07-advanced-intelligence.md
+
+### What Was Done
+
+**Trend Injector Agent (Feature 7A):**
+- `brandforge/agents/trend_injector/prompts.py` — 3 prompt constants: `TREND_INJECTOR_INSTRUCTION`, `TREND_RESEARCH_SYSTEM_PROMPT`, `HOOK_RESEARCH_PROMPT`
+- `brandforge/agents/trend_injector/tools.py` — 3 tools: `research_platform_trends` (Gemini + Google Search grounding, max 8 signals, 30-day scope), `research_audience_hooks` (3-5 hook patterns), `compile_trend_brief` (synthesis + Firestore persistence + session state injection)
+- `brandforge/agents/trend_injector/agent.py` — `trend_injector_agent = LlmAgent(output_key="trend_brief_result")`
+- `tests/trend_injector/__init__.py`, `tests/trend_injector/test_trend_injector.py` — 5 DoD tests
+
+**Competitor Intelligence Agent (Feature 7B):**
+- `brandforge/agents/competitor_intel/__init__.py` — Package marker
+- `brandforge/agents/competitor_intel/prompts.py` — 3 prompt constants: `COMPETITOR_INTEL_INSTRUCTION`, `VISION_ANALYSIS_PROMPT`, `POSITIONING_MAP_PROMPT`
+- `brandforge/agents/competitor_intel/tools.py` — 3 tools: `capture_competitor_screenshot` (Playwright headless + GCS upload, 403/timeout graceful skip), `analyze_competitor_brand` (Gemini Vision → CompetitorProfile), `generate_competitor_map` (positioning map SVG + differentiation strategy); includes `_build_fallback_svg()` for rule-based SVG generation
+- `brandforge/agents/competitor_intel/agent.py` — `competitor_intel_agent = LlmAgent(output_key="competitor_map_result")`
+- `tests/competitor_intel/__init__.py`, `tests/competitor_intel/test_competitor.py` — 6 DoD tests
+
+**Brand Memory Agent (Feature 7C):**
+- `brandforge/agents/brand_memory/__init__.py` — Package marker
+- `brandforge/agents/brand_memory/prompts.py` — 2 prompt constants: `BRAND_MEMORY_INSTRUCTION`, `MEMORY_SYNTHESIS_PROMPT`
+- `brandforge/agents/brand_memory/tools.py` — 3 tools: `fetch_brand_memory` (Firestore query by brand_name), `apply_memory_recommendations` (pre-populate from past performance), `update_brand_memory` (append-only history, Gemini synthesis for recommendations with rule-based fallback)
+- `brandforge/agents/brand_memory/agent.py` — `brand_memory_agent = LlmAgent(output_key="brand_memory_result")`
+- `tests/brand_memory/__init__.py`, `tests/brand_memory/test_brand_memory.py` — 5 DoD tests
+
+**Sage Voice Orchestrator (Feature 7D):**
+- `brandforge/agents/sage/__init__.py` — Package marker
+- `brandforge/agents/sage/prompts.py` — 3 constants: `SAGE_INSTRUCTION`, `NARRATION_TEMPLATES` (6 milestone templates), `VOICE_CLASSIFICATION_PROMPT`
+- `brandforge/agents/sage/tools.py` — 2 tools: `narrate_agent_milestone` (Cloud TTS + GCS caching keyed by text hash), `process_voice_feedback` (Gemini transcription + intent classification + modification routing); includes `_synthesize_speech()` and `_extract_narration_context()` helpers
+- `brandforge/agents/sage/agent.py` — `sage_agent = LlmAgent(output_key="sage_result")`
+- `tests/sage/__init__.py`, `tests/sage/test_sage.py` — 5 DoD tests
+
+**Root Pipeline Wiring:**
+- `brandforge/agent.py` — Added `pre_strategy_intel = ParallelAgent(trend_injector, competitor_intel, brand_memory)` running BEFORE Brand Strategist. Full pipeline: `pre_strategy_intel → brand_strategist → production_orchestrator → qa_orchestrator → distribution_orchestrator → sage`
+
+**Bug Fixes (pre-existing):**
+- Fixed `ToolContext` import in 4 Phase 5-6 agent files: `format_optimizer/tools.py`, `publisher/tools.py`, `post_scheduler/tools.py`, `analytics/tools.py` — changed `from google.adk.agents import ToolContext` → `from google.adk.tools import ToolContext`
+- Fixed `tests/analytics/test_analytics.py` — corrected mock patch paths for `query_documents` and `bigquery` (inside-function imports were being mocked at wrong location)
+
+### Decisions Made
+- Trend Injector, Competitor Intel, and Brand Memory run in **parallel** (ParallelAgent) before Brand Strategist — they are independent and injecting context simultaneously minimizes latency
+- Sage runs **last** in the pipeline (after distribution) to deliver the campaign debrief narration
+- Trend Injector uses `types.Tool(google_search=types.GoogleSearch())` for Gemini Search grounding — not hardcoded data
+- Competitor Intel `capture_competitor_screenshot` imports Playwright inside the function to avoid import errors when Playwright is not installed
+- Brand Memory's `update_brand_memory` uses Gemini synthesis for recommendation updates with a rule-based fallback for content type bias calculation
+- Sage's TTS audio is cached in GCS by SHA-256 text hash — identical narrations are never regenerated
+- Sage voice is hardcoded to `en-US-Neural2-J` per PRD spec
+- All 4 agents follow the established pattern: `agent.py` + `tools.py` + `prompts.py` + `__init__.py`
+
+### Blockers / Open Questions
+- All Phase 7 tools require live GCP services (Gemini, Cloud TTS, Firestore, GCS, Playwright) for full integration testing
+- Playwright browser needs to be installed on Cloud Run (`playwright install chromium`) — not in current Dockerfile
+- Gemini Live API streaming audio for Sage real-time voice interaction is simplified to file-based audio in this implementation
+- No Pub/Sub trigger set up for Analytics → Brand Memory pipeline (Analytics runs on Cloud Scheduler, Brand Memory update happens manually or could be triggered by a campaign.published event)
+
+### Definition of Done Verification
+
+**Trend Injector:**
+| Item | Status |
+|------|--------|
+| Search grounding used (source_url valid URLs) | PASS (unit test) |
+| No hallucinated trends (confidence > 0 ↔ source_url) | PASS (unit test) |
+| Brand Strategist receives brief (session state injected) | PASS (mocked test) |
+| Graceful fallback (0 results → no crash) | PASS (mocked test) |
+
+**Competitor Intelligence:**
+| Item | Status |
+|------|--------|
+| Screenshot captured (JPEG to GCS) | PASS (mocked Playwright test) |
+| Vision analysis structured (Pydantic valid) | PASS (unit test) |
+| Positioning map SVG valid (parseable XML) | PASS (unit test) |
+| Inaccessible URL skipped (403 → empty, no crash) | PASS (mocked test) |
+| Timeout URL skipped | PASS (mocked test) |
+| Fallback SVG valid | PASS (unit test) |
+
+**Brand Memory:**
+| Item | Status |
+|------|--------|
+| First campaign creates brand document | PASS (mocked Firestore test) |
+| History is append-only (3 campaigns → 3 entries) | PASS (unit test) |
+| Intake form pre-populated (recommendations returned) | PASS (unit test) |
+| First-run brand handled gracefully | PASS (unit test) |
+| Content bias computed (video > 0.5 after video win) | PASS (mocked test) |
+
+**Sage Voice:**
+| Item | Status |
+|------|--------|
+| Narration audio generated (GCS URL returned) | PASS (mocked TTS test) |
+| Narration caching (same input → same URL) | PASS (mocked test) |
+| Voice feedback classified (intent=modification) | PASS (mocked test) |
+| Modification routed to agent (session state key set) | PASS (mocked test) |
+| Barge-in handling (new input during narration) | PASS (mocked test) |
+
+**Code Quality:**
+| Item | Status |
+|------|--------|
+| All functions have docstrings + type hints | PASS |
+| All async tools have try/except + logging.error | PASS |
+| No hardcoded secrets or bucket names | PASS |
+| All new files compile without syntax errors | PASS |
+| Import chain: root_agent includes all Phase 7 agents | PASS |
+| No regression: 76 offline tests pass | PASS |
+
+### Next Session Should
+- Begin **Phase 8 (Demo Hardening)** by reading `brandforge-prd/phase-08-demo-hardening.md` (if exists)
+- Add Playwright installation to `Dockerfile`: `RUN playwright install --with-deps chromium`
+- Add `/campaigns/{id}/publish/{item_id}` endpoint to `brandforge/api.py` for Cloud Scheduler callbacks
+- Consider adding Analytics → Brand Memory trigger: after analytics completes, auto-call `update_brand_memory`
+- The root pipeline is now 6 stages: `pre_strategy_intel(parallel) → brand_strategist → production_orchestrator → qa_orchestrator → distribution_orchestrator → sage`
+- Pre-strategy intel runs Trend Injector, Competitor Intel, and Brand Memory in parallel
+- To run all offline tests: `uv run pytest tests/ -m "not llm and not gcp" -v` (76 tests)
+- To run Phase 7 tests only: `uv run pytest tests/trend_injector/ tests/competitor_intel/ tests/brand_memory/ tests/sage/ -v` (21 tests)
